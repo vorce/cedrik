@@ -1,0 +1,2 @@
+%{"chronos": {:hex, :chronos, "1.0.0"},
+  "kvs": {:git, "git://github.com/synrc/kvs.git", "0317e3347eb92c0531118094778c7bd227620a98", []}}
