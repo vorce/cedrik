@@ -28,7 +28,13 @@ Smittskyddsenheten i länet har tagit flera patientprover som bekräftar misstan
 Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern hade fallit ut genom ett fönster i en bostad på fjärde våningen i Bergsjön, och landat på en gräsmatta. Polisen uppskattar fallhöjden till 20 meter.
 
 - Det är högt alltså, jäkligt högt, säger Thomas Fuxborg, polisens presstalesman.",
-    publish_date: {2015, 5, 5}, index_date: Chronos.now}
+    publish_date: {2015, 5, 5}, index_date: Chronos.now},
+  %Document{id: 42, title: "Writing a search engine in Elixir",
+    body: "Mkay so I decided to write cedrik as a fun exercise.. bye.",
+    publish_date: {2015, 5, 18}, index_date: Chronos.now},
+  %Document{id: 666, title: "cedrik the real froge",
+    body: "Hello world! I am a test document :D",
+    publish_date: {2015, 5, 18}, index_date: Chronos.now},
   ]
   end
 

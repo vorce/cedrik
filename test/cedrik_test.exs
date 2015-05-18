@@ -41,9 +41,15 @@ defmodule CedrikTest do
   end
 
   test "search for term with multiple hits" do
-    result = Search.search(%TermQuery{field: :body, value: "att"}, ["foo", "test-index"])
+    result = Search.search(%TermQuery{field: :body, value: "att"},
+      ["foo", "test-index"])
     assert length(result.hits) > 1
     assert result.hits |> Enum.map(fn(d) -> d.id end) |> Enum.sort ==
       [0, 1, 2]
+  end
+
+  test "term query obeys field parameter" do
+    result = Search.search(%TermQuery{field: :body, value: "cedrik"}, ["test-index"])
+    assert result.hits |> Enum.map(fn(d) -> d.id end) == [42]
   end
 end
