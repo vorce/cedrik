@@ -16,8 +16,8 @@ defmodule Documentstore do
   @doc """
   Puts the `value` for the given `key`
   """
-  def put(doc) do
-    Agent.update(__MODULE__, &Map.put(&1, doc.id, doc))
+  def put(key, doc) do
+    Agent.update(__MODULE__, &Map.put(&1, key, doc))
   end
 end
 

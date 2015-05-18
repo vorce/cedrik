@@ -43,31 +43,27 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
     Regex.split(re, text) |> Enum.filter(fn(w) -> w != "" end)
   end
 
-  def indexed?(index, doc) do
-    Indexstore.get(index).document_ids |> Enum.member?(doc.id)
+  def indexed?(doc, index) do
+    Indexstore.get(index).document_ids
+      |> Enum.member?(doc.id)
   end
 
-  def index(index, doc) do
-    case indexed?(index, doc) do
+  def index(doc, index) do
+    case indexed?(doc, index) do
       true -> IO.puts("Document #{doc.id} already present in #{index}")
       false -> index_doc(index, doc)
     end
   end
 
   def index_doc(doc, index) do
-    IO.puts("Indexing document with id #{doc.id} into #{index}")
-    title_terms = doc.title |> tokenize
-    body_terms = doc.body |> tokenize
-    title_locs = term_locations(doc.id, title_terms, :title)
-      |> Enum.reduce(&merge_term_locations(&1, &2))
-    body_locs = term_locations(doc.id, body_terms, :body)
-      |> Enum.reduce(&merge_term_locations(&1, &2))
-    terms = merge_term_locations(title_locs, body_locs)
+    id = id(doc)
+    IO.puts("Indexing document with id #{id} into #{index}")
+    terms = field_locations(doc) |> Enum.reduce(&merge_term_locations(&1, &2))
     idx = Indexstore.get(index)
       |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
-      |> update_in([:document_ids], fn(ids) -> Set.put(ids, doc.id) end)
+      |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
     
-    Documentstore.put(doc) # TODO move this
+    Documentstore.put(id, doc) # TODO move this
     {Indexstore.put(idx), idx}
   end
 
@@ -89,6 +85,34 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
           Enum.concat(l1, l2) |> Enum.into(HashSet.new) end)
       end)
   end
+
+  # TODO: Use an actual UUID instead of random
+  def id(doc) when is_map(doc) do
+    Map.get(doc, :id, Map.get(doc, "id", :random.uniform * 1000000))
+  end
+
+  def field_locations(doc) when is_map(doc) do
+    id = id(doc)
+    doc
+      |> Enum.filter(&should_index?(&1))
+      |> Enum.flat_map(fn({k, v}) ->
+        term_locations(id, tokenize(v), k) end)
+  end
+
+  def should_index?({key, val}) when is_atom(key) and is_binary(val) do
+    k = Atom.to_string(key)
+    case String.starts_with?(k, "_") or key == :id do
+      true -> false
+      false -> true
+    end
+  end
+  def should_index?({key, val}) when is_binary(key) and is_binary(val) do
+    case String.starts_with?(key, "_") or key == "id" do
+      true -> false
+      false -> true
+    end
+  end
+  def should_index?({key, val}) do false end
 end
 
 

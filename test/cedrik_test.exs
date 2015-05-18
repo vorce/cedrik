@@ -22,14 +22,36 @@ defmodule CedrikTest do
     assert Map.size(index.terms) > 0
   end
 
+  test "indexing custom doc" do
+    my_doc = %{:id => 123,
+      :field1 => "searchable field1",
+      :_field2 => "not searchable cause _ prefix field2",
+      "field3" => "searchable field3",
+      "_field4" => "not searchable field4",
+      :field5 => -1,
+      :field6 => {"not", "searchable", "field6"}}
+    {:ok, index} = Indexer.index_doc(my_doc, "test-index")
+
+    assert Set.member?(index.document_ids, my_doc[:id])
+    assert Map.size(index.terms) > 0
+    assert Search.search(%TermQuery{value: "field1"}, [index.name]).hits |> ids == [123]
+    assert Search.search(%TermQuery{value: "field2"}, [index.name]).hits |> ids == []
+    assert Search.search(%TermQuery{value: "field3"}, [index.name]).hits |> ids == [123]
+    assert Search.search(%TermQuery{value: "field4"}, [index.name]).hits |> ids == []
+    assert Search.search(%TermQuery{value: "field5"}, [index.name]).hits |> ids == []
+    assert Search.search(%TermQuery{value: "field6"}, [index.name]).hits |> ids == []
+  end
+
   test "search for all docs" do
     idx = %Index{name: "all-q",
       document_ids: Set.put(HashSet.new, 0),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
-    Indexer.test_corpus |> hd |> Documentstore.put
+    doc = Indexer.test_corpus |> hd
+    Documentstore.put(doc.id, doc)
     Indexstore.put(idx)
     result = Search.search(%MatchAll{}, [idx.name])
+
     assert length(result.hits) == 1
     assert result.hits |> ids |> Enum.member?(0)
   end
