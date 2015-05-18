@@ -1,8 +1,8 @@
-defmodule AllQuery do
-  defstruct type: "all"
-  @type t :: %AllQuery{type: String.t}
+defmodule MatchAll do
+  defstruct type: :all
+  @type t :: %MatchAll{type: Atom.t}
 
-  defimpl Search, for: AllQuery do
+  defimpl Search, for: MatchAll do
     def search(_query, indices) do
       IO.puts("Searching for all documents in #{indices}")
       hits = indices |> Enum.flat_map(&all_in(&1))

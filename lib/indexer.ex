@@ -48,7 +48,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
     end
   end
 
-  def index_doc(index, doc) do
+  def index_doc(doc, index) do
     IO.puts("Indexing document with id #{doc.id} into #{index}")
     title_terms = doc.title |> tokenize
     body_terms = doc.body |> tokenize
