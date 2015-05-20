@@ -6,7 +6,7 @@ defmodule CedrikTest do
     Indexstore.start_link()
     Documentstore.start_link()
     Indexer.test_corpus()
-      |> Enum.each(&Indexer.index_doc(&1, "test-index"))
+      |> Enum.each(&Store.store(&1, "test-index"))
 
     :ok
   end
@@ -14,7 +14,7 @@ defmodule CedrikTest do
   test "indexing one doc" do
     index_name = "index1"
     doc = hd(Indexer.test_corpus)
-    {:ok, index} = Indexer.index_doc(doc, index_name)
+    {:ok, index} = Store.store(doc, index_name)
     
     assert index.name == index_name
     assert Set.size(index.document_ids) == 1
@@ -30,7 +30,7 @@ defmodule CedrikTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    {:ok, index} = Indexer.index_doc(my_doc, "test-index")
+    {:ok, index} = Store.store(my_doc, "test-index")
 
     assert Set.member?(index.document_ids, my_doc[:id])
     assert Map.size(index.terms) > 0

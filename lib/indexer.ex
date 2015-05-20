@@ -38,6 +38,12 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
   ]
   end
 
+  defimpl Store, for: Map do
+    def store(map, index) do
+      Indexer.index(map, index)
+    end
+  end
+
   def tokenize(text) do
     re = ~r/\W/iu # Match all non-words
     Regex.split(re, text) |> Enum.filter(fn(w) -> w != "" end)
@@ -45,13 +51,13 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
 
   def indexed?(doc, index) do
     Indexstore.get(index).document_ids
-      |> Enum.member?(doc.id)
+      |> Enum.member?(id(doc))
   end
 
   def index(doc, index) do
     case indexed?(doc, index) do
-      true -> IO.puts("Document #{doc.id} already present in #{index}")
-      false -> index_doc(index, doc)
+      true -> IO.puts("Document #{id(doc)} already present in #{index}")
+      false -> index_doc(doc, index)
     end
   end
 
