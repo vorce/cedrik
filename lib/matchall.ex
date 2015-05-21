@@ -11,7 +11,8 @@ defmodule MatchAll do
 
     def all_in(index) do
       Indexstore.get(index).document_ids
-        |> Enum.map(&Documentstore.get(&1))
+        |> Enum.map(fn(id) -> {id, HashSet.new} end)
+        #&Documentstore.get(&1))
     end
   end
 end

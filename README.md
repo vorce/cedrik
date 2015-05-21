@@ -8,7 +8,7 @@ A for-fun project of writing a small search engine.
 - Queries:
     - ☑ MatchAll
     - ☑ Term (☐ boosting)
-    - ☐ And, Or, Not
+    - ☑ Boolean (And, Or, Not)
     - ☐ Near 
     - ☐ Wildcard
 - ☐ Distributed indices (mnesia?, KVS?, riak?)
@@ -18,34 +18,55 @@ A for-fun project of writing a small search engine.
 ### Indexing stuff
 
 Cedrik can take any Elixir map and index its contents for searching.
-I would recommend creating a struct, with an id field. All string values
-in the struct will then be tokenized and indexed
-(unless the key is prefixed with underscore).
+I would recommend creating a struct, with an id field, that
+implements the Store protocol. Look at the example implementation
+for Map and Document in indexer.ex.
 Make sure your struct `@derive [Access, Enumerable]`!
+Indexer.index_doc/3 will skip indexing of any fields starting with underscore.
 
-You can index a raw map, but make sure you have a :id or "id" key.
+After your elixir data structure is indexed, where can you get it?
+From the Documentstore! Just do `Documentstore.get/1`
 
-For examples, check out cedrik_test.exs, document.ex and indexer.ex
+For examples, check out `test/cedrik_test.exs`,
+`lib/document.ex` and `indexer.ex`
+
+#### Tokenizing
+
+For now a token is simply any string separated by spaces.
 
 ### Querying
 
+You can at any time access raw indices via `Indexstore.get/1`, but
+that is not very useful. Luckily Cedrik provides some shortcuts to
+querying its indices.
+
 #### MatchAll
+
+This query will return all document ids in the specified indices.
+
+TODO:
+If you specify an empty list of indices, all documents in all indices
+will be hits.
 
 #### Term
 
-#### And
+A TermQuery simply gives back the document ids (and the locations of the
+term wihin that document) that contains the given term.
+You can specify exactly what fields to look in, or all of them
+(which is the default).
 
-#### Or
+#### Boolean
 
-#### Not
-
-#### Near
+With the BooleanQuery you can construct more advanced queries.
+`must`, `optional` and `must_not`
 
 #### Wildcard
 
 ### Result options
 
+TODO
+
 #### Fields
 
-#### Sorting
+#### Ranking
 

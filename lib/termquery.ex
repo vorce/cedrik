@@ -13,10 +13,9 @@ defmodule TermQuery do
       Indexstore.get(index).terms
         |> Map.get(query.value, %{}) # Map with docIds as keys
         |> Enum.filter(fn({_id, locs}) ->
-          on_fields(locs, query.fields) != [] end) # Only hits with correct fields
-        |> Enum.into(%{})
-        |> Map.keys # TODO we disregard positions/highlights for now
-        |> Enum.map(&Documentstore.get(&1))
+          on_fields(locs, query.fields) != [] end) # Only hits in correct fields
+        #|> Map.keys # TODO we disregard positions/highlights for now
+        #|> Enum.map(&Documentstore.get(&1))
     end
 
     def on_fields(locs, []) do locs end

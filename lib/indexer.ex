@@ -38,9 +38,15 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
   ]
   end
 
-  defimpl Store, for: Map do
+  defimpl Store, for: [Map, Document] do
     def store(map, index) do
-      Indexer.index(map, index)
+      Indexer.index(id(map), map, index)
+    end
+
+    # TODO: Use some actual UUID here instead of random
+    def id(map) do
+      Map.get(map, :id,
+        Map.get(map, "id", :random.uniform * 1000000))
     end
   end
 
@@ -49,36 +55,37 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
     Regex.split(re, text) |> Enum.filter(fn(w) -> w != "" end)
   end
 
-  def indexed?(doc, index) do
+  def indexed?(id, index) do
     Indexstore.get(index).document_ids
-      |> Enum.member?(id(doc))
+      |> Enum.member?(id)
   end
 
-  def index(doc, index) do
-    case indexed?(doc, index) do
-      true -> IO.puts("Document #{id(doc)} already present in #{index}")
-      false -> index_doc(doc, index)
+  def index(id, doc, index) do
+    case indexed?(id, index) do
+      true -> IO.puts("Document #{id} already present in #{index}")
+      false -> index_doc(id, doc, index)
     end
   end
 
-  def index_doc(doc, index) do
-    id = id(doc)
+  def index_doc(id, doc, index) do
     IO.puts("Indexing document with id #{id} into #{index}")
-    terms = field_locations(doc) |> Enum.reduce(&merge_term_locations(&1, &2))
+    terms = field_locations(id, doc)
+      |> Enum.reduce(&merge_term_locations(&1, &2))
+
     idx = Indexstore.get(index)
       |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
       |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
     
-    Documentstore.put(id, doc) # TODO move this
+    Documentstore.put(id, doc) # TODO move this?
     {Indexstore.put(idx), idx}
   end
 
-  def term_locations(docid, terms, field) do
+  def term_locations(id, terms, field) do
     terms
       |> Enum.with_index
       |> Enum.map(fn({t, i}) ->
         Map.put(Map.new, t,
-          Map.put(Map.new, docid,
+          Map.put(Map.new, id,
             Set.put(HashSet.new, %Location{field: field, position: i})))
         end)
   end
@@ -92,13 +99,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
       end)
   end
 
-  # TODO: Use an actual UUID instead of random
-  def id(doc) when is_map(doc) do
-    Map.get(doc, :id, Map.get(doc, "id", :random.uniform * 1000000))
-  end
-
-  def field_locations(doc) when is_map(doc) do
-    id = id(doc)
+  def field_locations(id, doc) when is_map(doc) do
     doc
       |> Enum.filter(&should_index?(&1))
       |> Enum.flat_map(fn({k, v}) ->

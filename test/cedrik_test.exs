@@ -30,7 +30,7 @@ defmodule CedrikTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    {:ok, index} = Store.store(my_doc, "test-index")
+    {:ok, index} = Store.store(my_doc, "test-index2")
 
     assert Set.member?(index.document_ids, my_doc[:id])
     assert Map.size(index.terms) > 0
@@ -59,15 +59,14 @@ defmodule CedrikTest do
   test "search for specific term" do
     result = Search.search(%TermQuery{fields: [:title], value: "Pojke"}, ["test-index"])
     assert length(result.hits) == 1
-    assert hd(result.hits).id == 3
+    assert result.hits |> ids == [3]
   end
 
   test "search for term with multiple hits" do
     result = Search.search(%TermQuery{fields: [:body], value: "att"},
       ["foo", "test-index"])
     assert length(result.hits) > 1
-    assert result.hits |> ids |> Enum.sort ==
-      [0, 1, 2]
+    assert result.hits |> ids |> Enum.sort == [0, 1, 2]
   end
 
   test "term query obeys field parameter" do
@@ -88,7 +87,66 @@ defmodule CedrikTest do
     assert r.hits |> ids |> Enum.sort == [42, 666]
   end
 
-  def ids(hits) do
-    hits |> Enum.map(fn(d) -> d.id end)
+  test "boolean query ORs" do
+    q1 = %TermQuery{value: "tempo"}
+    q2 = %TermQuery{value: "döda"}
+    r = Search.search(%BooleanQuery{optional: [q1, q2]},
+      ["test-index"])
+    assert r.hits |> ids |> Enum.sort == [1, 2]
   end
+
+  test "boolean query ANDs" do
+    q1 = %TermQuery{value: "det"}
+    q2 = %TermQuery{value: "att"}
+    r = Search.search(%BooleanQuery{must: [q1, q2]},
+      ["test-index"])
+    assert r.hits |> ids |> Enum.sort == [0, 1]
+  end
+
+  test "boolean query ORs and ANDs" do
+    opt = [%TermQuery{value: "tempo"}, %TermQuery{value: "döda"}]
+    must = [%TermQuery{value: "det"}, %TermQuery{value: "att"}]
+    r = Search.search(%BooleanQuery{optional: opt, must: must},
+      ["test-index"])
+    assert r.hits |> ids |> Enum.sort == [0, 1] # TODO 1 should have higher ranking!
+  end
+
+  test "boolean query NOTs" do
+    q1 = %TermQuery{value: "cedrik"}
+    q2 = %TermQuery{value: "döda"}
+    r = Search.search(%BooleanQuery{must_not: [q1, q2]},
+      ["test-index"])
+    assert r.hits |> ids |> Enum.sort == [0, 1, 3]
+  end
+
+  test "boolean query NOTs + ANDs" do
+    nope = [%TermQuery{value: "efter", fields: [:title]}]
+    yep = [%TermQuery{value: "efter", fields: [:body]}]
+    r = Search.search(%BooleanQuery{must: yep, must_not: nope},
+      ["test-index"])
+    assert r.hits |> ids == [1]
+  end
+
+  test "nested stuff" do
+    have = [%BooleanQuery{
+      optional: [%TermQuery{value: "cedrik"},
+          %TermQuery{value: "Torslandafabriken"}]},
+        %TermQuery{value: "a"}]
+
+    r = Search.search(%BooleanQuery{must: have},
+      ["test-index"])
+
+    assert r.hits |> ids |> Enum.sort == [42, 666]
+  end
+
+  # TODO: Test (and impl) ranking!
+
+  def ids(hits) when is_list(hits) do
+    hits |> Enum.map(fn({id, _}) -> id end)
+  end
+
+  def ids(hits) do
+    hits |> Enum.map(fn(d) -> Store.id(d) end)
+  end
+  #def ids(hits) when is_list(hits) do hits end
 end
