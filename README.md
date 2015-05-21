@@ -62,6 +62,8 @@ With the BooleanQuery you can construct more advanced queries.
 
 #### Wildcard
 
+#### Near
+
 ### Result options
 
 TODO

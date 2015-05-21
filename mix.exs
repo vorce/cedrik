@@ -28,6 +28,7 @@ defmodule Cedrik.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:chronos, "~> 1.0.0"},
-    {:kvs, github: "synrc/kvs"}]
+     {:kvs, github: "synrc/kvs"},
+    ]
   end
 end

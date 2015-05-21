@@ -119,7 +119,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
       false -> true
     end
   end
-  def should_index?({key, val}) do false end
+  def should_index?({_key, _val}) do false end
 end
 
 
