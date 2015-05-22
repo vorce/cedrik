@@ -27,20 +27,28 @@ defmodule BooleanQuery do
     end
 
     def search(query, indices) do
-      nope = Search.search(%BooleanQuery{
+      nope = fn -> Search.search(%BooleanQuery{
           must: [],
           optional: query.must_not,
           must_not: []},
-        indices)
+        indices) end
 
-      res = Search.search(%BooleanQuery{
+      res = fn -> Search.search(%BooleanQuery{
           must: query.must,
           optional: query.optional,
           must_not: []},
-        indices)
-      filtered = res.hits
+        indices) end
+
+      both = Task.async(fn ->
+        e = Task.async(nope)
+        i = Task.async(res)
+        {Task.await(e), Task.await(i)}
+      end)
+      {excl, incl} = Task.await(both)
+
+      filtered = incl.hits
         |> Enum.filter(fn({i, _l}) ->
-          not Enum.member?(ids(nope.hits), i) end)
+          not Enum.member?(ids(excl.hits), i) end)
 
       %Result{hits: filtered}
     end
