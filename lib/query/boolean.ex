@@ -1,25 +1,25 @@
-defmodule BooleanQuery do
+defmodule Query.Boolean do
   defstruct must: [], optional: [], must_not: [], type: :boolean
-  @type t :: %BooleanQuery{
+  @type t :: %Query.Boolean{
     must: List.t,
     optional: List.t,
     must_not: List.t,
     type: Atom.t,
   }
 
-  defimpl Search, for: BooleanQuery do
-    def search(%BooleanQuery{optional: [], must: [], must_not: []} = _q, indices) do
-      Search.search(%MatchAll{}, indices)
+  defimpl Search, for: Query.Boolean do
+    def search(%Query.Boolean{optional: [], must: [], must_not: []} = _q, indices) do
+      Search.search(%Query.MatchAll{}, indices)
     end
 
-    def search(%BooleanQuery{optional: opt, must: [], must_not: []} = _q, indices) do
+    def search(%Query.Boolean{optional: opt, must: [], must_not: []} = _q, indices) do
       opt
         |> Enum.map(&Search.search(&1, indices))
         |> Enum.reduce(fn(hs1, hs2) ->
           %Result{hits: Enum.concat(hs1.hits, hs2.hits) |> Enum.uniq} end)
     end
 
-    def search(%BooleanQuery{must: must, optional: _, must_not: []} = _q, indices) do
+    def search(%Query.Boolean{must: must, optional: _, must_not: []} = _q, indices) do
       must
         |> Enum.map(&Search.search(&1, indices))
         |> Enum.reduce(fn(hs1, hs2) ->
@@ -27,13 +27,13 @@ defmodule BooleanQuery do
     end
 
     def search(query, indices) do
-      nope = fn -> Search.search(%BooleanQuery{
+      nope = fn -> Search.search(%Query.Boolean{
           must: [],
           optional: query.must_not,
           must_not: []},
         indices) end
 
-      res = fn -> Search.search(%BooleanQuery{
+      res = fn -> Search.search(%Query.Boolean{
           must: query.must,
           optional: query.optional,
           must_not: []},

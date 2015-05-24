@@ -11,7 +11,10 @@ A for-fun project of writing a small search engine.
     - ☑ Boolean (And, Or, Not)
     - ☐ Near 
     - ☐ Wildcard
+- ☐ Ranking
+- ☐ Highlights
 - ☐ Distributed indices (mnesia?, KVS?, riak?)
+- ☐ Demo web UI (phoenix!)
 
 ## Usage
 

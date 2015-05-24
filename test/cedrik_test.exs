@@ -34,12 +34,18 @@ defmodule CedrikTest do
 
     assert Set.member?(index.document_ids, my_doc[:id])
     assert Map.size(index.terms) > 0
-    assert Search.search(%TermQuery{value: "field1"}, [index.name]).hits |> ids == [123]
-    assert Search.search(%TermQuery{value: "field2"}, [index.name]).hits |> ids == []
-    assert Search.search(%TermQuery{value: "field3"}, [index.name]).hits |> ids == [123]
-    assert Search.search(%TermQuery{value: "field4"}, [index.name]).hits |> ids == []
-    assert Search.search(%TermQuery{value: "field5"}, [index.name]).hits |> ids == []
-    assert Search.search(%TermQuery{value: "field6"}, [index.name]).hits |> ids == []
+    assert Search.search(%Query.Term{value: "field1"}, [index.name]).hits
+      |> ids == [123]
+    assert Search.search(%Query.Term{value: "field2"}, [index.name]).hits
+      |> ids == []
+    assert Search.search(%Query.Term{value: "field3"}, [index.name]).hits
+      |> ids == [123]
+    assert Search.search(%Query.Term{value: "field4"}, [index.name]).hits
+      |> ids == []
+    assert Search.search(%Query.Term{value: "field5"}, [index.name]).hits
+      |> ids == []
+    assert Search.search(%Query.Term{value: "field6"}, [index.name]).hits
+      |> ids == []
   end
 
   test "search for all docs" do
@@ -50,93 +56,109 @@ defmodule CedrikTest do
     doc = Indexer.test_corpus |> hd
     Documentstore.put(doc.id, doc)
     Indexstore.put(idx)
-    result = Search.search(%MatchAll{}, [idx.name])
+    result = Search.search(%Query.MatchAll{}, [idx.name])
 
     assert length(result.hits) == 1
     assert result.hits |> ids |> Enum.member?(0)
   end
 
   test "search for specific term" do
-    result = Search.search(%TermQuery{fields: [:title], value: "Pojke"}, ["test-index"])
+    result = Search.search(%Query.Term{fields: [:title], value: "Pojke"},
+      ["test-index"])
     assert length(result.hits) == 1
     assert result.hits |> ids == [3]
   end
 
+  test "on_fields" do
+    locs = [%Location{field: :body, position: 1},
+            %Location{field: :title, position: 1}]
+      |> Enum.into(HashSet.new)
+    r = Query.Term.on_fields(locs, [:title])
+    assert hd(r).field == :title
+  end
+
   test "search for term with multiple hits" do
-    result = Search.search(%TermQuery{fields: [:body], value: "att"},
+    result = Search.search(%Query.Term{fields: [:body], value: "att"},
       ["foo", "test-index"])
     assert length(result.hits) > 1
     assert result.hits |> ids |> Enum.sort == [0, 1, 2]
   end
 
   test "term query obeys field parameter" do
-    result = Search.search(%TermQuery{fields: [:body], value: "cedrik"},
+    result = Search.search(%Query.Term{fields: [:body], value: "cedrik"},
       ["test-index"])
     assert result.hits |> ids == [42]
   end
 
   test "term query on many fields" do
-    r = Search.search(%TermQuery{fields: [:title, :body], value: "cedrik"},
+    r = Search.search(%Query.Term{fields: [:title, :body], value: "cedrik"},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [42, 666]
   end
 
   test "term query without fields looks at all" do
-    r = Search.search(%TermQuery{fields: [], value: "cedrik"},
+    r = Search.search(%Query.Term{fields: [], value: "cedrik"},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [42, 666]
   end
 
   test "boolean query ORs" do
-    q1 = %TermQuery{value: "tempo"}
-    q2 = %TermQuery{value: "döda"}
-    r = Search.search(%BooleanQuery{optional: [q1, q2]},
+    q1 = %Query.Term{value: "tempo"}
+    q2 = %Query.Term{value: "döda"}
+    r = Search.search(%Query.Boolean{optional: [q1, q2]},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [1, 2]
   end
 
   test "boolean query ANDs" do
-    q1 = %TermQuery{value: "det"}
-    q2 = %TermQuery{value: "att"}
-    r = Search.search(%BooleanQuery{must: [q1, q2]},
+    q1 = %Query.Term{value: "det"}
+    q2 = %Query.Term{value: "att"}
+    r = Search.search(%Query.Boolean{must: [q1, q2]},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [0, 1]
   end
 
   test "boolean query ORs and ANDs" do
-    opt = [%TermQuery{value: "tempo"}, %TermQuery{value: "döda"}]
-    must = [%TermQuery{value: "det"}, %TermQuery{value: "att"}]
-    r = Search.search(%BooleanQuery{optional: opt, must: must},
+    opt = [%Query.Term{value: "tempo"}, %Query.Term{value: "döda"}]
+    must = [%Query.Term{value: "det"}, %Query.Term{value: "att"}]
+    r = Search.search(%Query.Boolean{optional: opt, must: must},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [0, 1] # TODO 1 should have higher ranking!
   end
 
   test "boolean query NOTs" do
-    q1 = %TermQuery{value: "cedrik"}
-    q2 = %TermQuery{value: "döda"}
-    r = Search.search(%BooleanQuery{must_not: [q1, q2]},
+    q1 = %Query.Term{value: "cedrik"}
+    q2 = %Query.Term{value: "döda"}
+    r = Search.search(%Query.Boolean{must_not: [q1, q2]},
       ["test-index"])
     assert r.hits |> ids |> Enum.sort == [0, 1, 3]
   end
 
   test "boolean query NOTs + ANDs" do
-    nope = [%TermQuery{value: "efter", fields: [:title]}]
-    yep = [%TermQuery{value: "efter", fields: [:body]}]
-    r = Search.search(%BooleanQuery{must: yep, must_not: nope},
+    nope = [%Query.Term{value: "efter", fields: [:title]}]
+    yep = [%Query.Term{value: "efter", fields: [:body]}]
+    r = Search.search(%Query.Boolean{must: yep, must_not: nope},
       ["test-index"])
     assert r.hits |> ids == [1]
   end
 
   test "nested stuff" do
-    have = [%BooleanQuery{
-      optional: [%TermQuery{value: "cedrik"},
-          %TermQuery{value: "Torslandafabriken"}]},
-        %TermQuery{value: "a"}]
+    have = [%Query.Boolean{
+      optional: [%Query.Term{value: "cedrik"},
+          %Query.Term{value: "Torslandafabriken"}]},
+        %Query.Term{value: "a"}]
 
-    r = Search.search(%BooleanQuery{must: have},
+    r = Search.search(%Query.Boolean{must: have},
       ["test-index"])
 
     assert r.hits |> ids |> Enum.sort == [42, 666]
+  end
+
+  test "ending wildcard query" do
+    r = Search.search(%Query.Wildcard{fields: [:title], value: "Student*"},
+      ["test-index"])
+    assert r.hits |> ids == [0]
+    assert r.hits |> locations == [:title]
   end
 
   # TODO: Test (and impl) ranking!
@@ -145,8 +167,10 @@ defmodule CedrikTest do
     hits |> Enum.map(fn({id, _}) -> id end)
   end
 
-  def ids(hits) do
-    hits |> Enum.map(fn(d) -> Store.id(d) end)
+  def locations(hits) do
+    hits
+      |> Enum.flat_map(fn{_, locs} -> Set.to_list(locs) end)
+      |> Enum.map(fn(l) -> l.field end)
+      |> Enum.uniq
   end
-  #def ids(hits) when is_list(hits) do hits end
 end

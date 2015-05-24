@@ -1,8 +1,8 @@
-defmodule MatchAll do
+defmodule Query.MatchAll do
   defstruct type: :all
-  @type t :: %MatchAll{type: Atom.t}
+  @type t :: %Query.MatchAll{type: Atom.t}
 
-  defimpl Search, for: MatchAll do
+  defimpl Search, for: Query.MatchAll do
     def search(_query, indices) do
       IO.puts("Searching for all documents in #{indices}")
       hits = indices |> Enum.flat_map(&all_in(&1))
