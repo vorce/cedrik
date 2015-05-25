@@ -38,8 +38,8 @@ defmodule Query.Wildcard do
       terms = Indexstore.get(index).terms
       terms
         |> Map.keys
-        |> Enum.filter(&filter_fn.(&1, no_wc))
-        |> Enum.map(&Map.get(terms, &1, %{}))
+        |> Stream.filter(&filter_fn.(&1, no_wc))
+        |> Stream.map(&Map.get(terms, &1, %{}))
         |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
         |> Query.Term.remove_irrelevant(query.fields)
     end

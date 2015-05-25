@@ -10,7 +10,7 @@ A for-fun project of writing a small search engine.
     - ☑ Term (☐ boosting)
     - ☑ Boolean (And, Or, Not)
     - ☐ Near 
-    - ☐ Wildcard
+    - ☐ Wildcard (Only single leading or single trailing supported now)
 - ☐ Ranking
 - ☐ Highlights
 - ☐ Distributed indices (mnesia?, KVS?, riak?)
@@ -25,7 +25,7 @@ I would recommend creating a struct, with an id field, that
 implements the Store protocol. Look at the example implementation
 for Map and Document in indexer.ex.
 Make sure your struct `@derive [Access, Enumerable]`!
-Indexer.index_doc/3 will skip indexing of any fields starting with underscore.
+`Indexer.index_doc/3` will skip indexing of any fields starting with underscore.
 
 After your elixir data structure is indexed, where can you get it?
 From the Documentstore! Just do `Documentstore.get/1`
@@ -64,6 +64,11 @@ With the BooleanQuery you can construct more advanced queries.
 `must`, `optional` and `must_not`
 
 #### Wildcard
+
+This query can help broaden your hits. A Wildcard query with
+value `"foo*"` matches both foo and foobar for example.
+Note that only single wildcards are supported for now, either
+leading (`*foo`) or trailing (`foo*`)
 
 #### Near
 
