@@ -161,6 +161,13 @@ defmodule CedrikTest do
     assert r.hits |> locations == [:title]
   end
 
+  test "leading wildcard query" do
+    r = Search.search(%Query.Wildcard{fields: [:title], value: "*fabriken"},
+      ["test-index"])
+    assert r.hits |> ids == [1]
+    assert r.hits |> locations == [:title]
+  end
+
   # TODO: Test (and impl) ranking!
 
   def ids(hits) when is_list(hits) do
