@@ -14,14 +14,14 @@ defmodule Query.Boolean do
 
     def search(%Query.Boolean{optional: opt, must: [], must_not: []} = _q, indices) do
       opt
-        |> Enum.map(&Search.search(&1, indices))
+        |> Stream.map(&Search.search(&1, indices))
         |> Enum.reduce(fn(hs1, hs2) ->
           %Result{hits: Enum.concat(hs1.hits, hs2.hits) |> Enum.uniq} end)
     end
 
     def search(%Query.Boolean{must: must, optional: _, must_not: []} = _q, indices) do
       must
-        |> Enum.map(&Search.search(&1, indices))
+        |> Stream.map(&Search.search(&1, indices))
         |> Enum.reduce(fn(hs1, hs2) ->
           %Result{hits: intersecting(hs1.hits, hs2.hits)} end)
     end
@@ -47,10 +47,10 @@ defmodule Query.Boolean do
       {excl, incl} = Task.await(both)
 
       filtered = incl.hits
-        |> Enum.filter(fn({i, _l}) ->
+        |> Stream.filter(fn({i, _l}) ->
           not Enum.member?(ids(excl.hits), i) end)
 
-      %Result{hits: filtered}
+      %Result{hits: Enum.to_list(filtered)}
     end
 
     def ids(hits) do
@@ -64,9 +64,10 @@ defmodule Query.Boolean do
 
       Set.intersection(hs1 |> Map.keys |> Enum.into(HashSet.new),
                        hs2 |> Map.keys |> Enum.into(HashSet.new))
-        |> Enum.map(fn(i) ->
+        |> Stream.map(fn(i) ->
           {i, Set.union(Map.get(hs1, i, HashSet.new),
             Map.get(hs2, i, HashSet.new))} end)
+        |> Enum.to_list
     end
   end
 end

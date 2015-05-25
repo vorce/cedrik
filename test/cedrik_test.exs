@@ -74,6 +74,7 @@ defmodule CedrikTest do
             %Location{field: :title, position: 1}]
       |> Enum.into(HashSet.new)
     r = Query.Term.on_fields(locs, [:title])
+      |> Enum.to_list
     assert hd(r).field == :title
   end
 

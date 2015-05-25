@@ -5,7 +5,9 @@ defmodule Query.Term do
   defimpl Search, for: Query.Term do
     def search(query, indices) do
       IO.puts("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
-      hits = indices |> Enum.flat_map(&term_in(&1, query))
+      hits = indices
+        |> Stream.flat_map(&term_in(&1, query))
+        |> Enum.to_list
       %Result{ hits: hits }
     end
 
@@ -23,27 +25,19 @@ defmodule Query.Term do
 
   def remove_irrelevant(hits, fields) do
     hits
-      |> Enum.map(fn({id, locs}) ->
+      |> Stream.map(fn({id, locs}) ->
         ls = Query.Term.on_fields(locs, fields)
         {id, Enum.into(ls, HashSet.new)}
       end)
-      |> Enum.filter(fn({_id, locs}) ->
+      |> Stream.filter(fn({_id, locs}) ->
         not Enum.empty?(locs) end)
   end
 
   def on_fields(locs, []) do locs end
   def on_fields(locs, fields) do
     locs
-      |> Enum.filter(fn(%Location{} = l) ->
+      |> Stream.filter(fn(%Location{} = l) ->
         Enum.member?(fields, l.field) end)
-  end
-
-  def fix_locs({id, locs}, fields) do
-    g = locs
-      |> Enum.filter(fn(%Location{} = l) ->
-        Enum.member?(fields, l.field)
-      end)
-    {id, g}
   end
 end
 
