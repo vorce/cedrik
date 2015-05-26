@@ -7,7 +7,7 @@ otp_release:
   - 17.5
 sudo: false
 script:
-  - mix test.all
+  - mix test
 notifications:
   recipients:
     - joel@vorce.se
