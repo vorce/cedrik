@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/vorce/cedrik.svg?branch=master)](https://travis-ci.org/vorce/cedrik)
+
 # Cedrik
 
 A for-fun project of writing a small search engine.
