@@ -1,2 +1,4 @@
 %{"chronos": {:hex, :chronos, "1.0.0"},
-  "kvs": {:git, "git://github.com/synrc/kvs.git", "0317e3347eb92c0531118094778c7bd227620a98", []}}
+  "inch_ex": {:hex, :inch_ex, "0.3.1"},
+  "kvs": {:git, "git://github.com/synrc/kvs.git", "0317e3347eb92c0531118094778c7bd227620a98", []},
+  "poison": {:hex, :poison, "1.4.0"}}

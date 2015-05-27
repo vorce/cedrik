@@ -29,6 +29,7 @@ defmodule Cedrik.Mixfile do
   defp deps do
     [{:chronos, "~> 1.0.0"},
      {:kvs, github: "synrc/kvs"},
+     {:inch_ex, only: :docs},
     ]
   end
 end
