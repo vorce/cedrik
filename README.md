@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/vorce/cedrik.svg?branch=master)](https://travis-ci.org/vorce/cedrik)
+[![Inline docs](http://inch-ci.org/github/vorce/cedrik.svg?branch=HEAD&style=flat)](http://inch-ci.org/github/vorce/cedrik)
 
 # Cedrik
 
