@@ -48,6 +48,11 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
       Map.get(map, :id,
         Map.get(map, "id", :random.uniform * 1000000))
     end
+
+    def delete(map, index) do
+      Documentstore.delete([id(map)])
+      Indexstore.delete_doc(map, index)
+    end
   end
 
   def tokenize(text) do

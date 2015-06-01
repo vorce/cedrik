@@ -19,5 +19,13 @@ defmodule Documentstore do
   def put(key, doc) do
     Agent.update(__MODULE__, &Map.put(&1, key, doc))
   end
+
+
+  @doc """
+  Deletes the documents with id in keys
+  """
+  def delete(keys) do
+    Agent.update(__MODULE__, &Map.drop(&1, keys))
+  end
 end
 

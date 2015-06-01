@@ -74,9 +74,11 @@ leading (`*foo`) or trailing (`foo*`)
 
 #### Near
 
-### Result options
+### Results
 
-TODO
+At the moment results from `Search.search/2` will give you
+a list of tuples that look like:
+`{doc_id, #HashSet<[%Location{field: :field, position: x}]>}`
 
 #### Fields
 

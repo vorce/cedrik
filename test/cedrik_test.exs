@@ -48,6 +48,39 @@ defmodule CedrikTest do
       |> ids == []
   end
 
+  test "delete index" do
+    idx = %Index{name: "cedrekked",
+      document_ids: Set.put(HashSet.new, 0),
+      terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
+    Indexstore.put(idx)
+    Indexstore.delete(idx.name)
+    assert Indexstore.get(idx.name).document_ids |> Set.size == 0
+    assert Indexstore.get(idx.name).terms |> Map.keys == []
+  end
+
+  test "delete doc" do
+    index = "test-index-delete"
+    doc1 = %{:id => 90_000,
+      :text => "hello foo bar att en dag få vara cedrik term i nattens"}
+    doc2 = %{:id => 91_000,
+      :text => "nattens i term cedrik vara få dag en att bar foo hello"}
+
+    Store.store(doc1, index)
+    Store.store(doc2, index)
+
+    assert Indexstore.get(index).document_ids
+      |> Enum.member?(doc1.id)
+    assert Indexstore.get(index).terms |> Map.get("cedrik")
+      |> Map.has_key?(doc1.id)
+
+    Store.delete(doc1, index)
+
+    assert Indexstore.get(index).document_ids |> Enum.member?(doc2.id)
+    assert Indexstore.get(index).document_ids |> Set.size == 1
+    assert Indexstore.get(index).terms
+      |> Map.get("cedrik") |> Map.keys == [doc2.id]
+  end
+
   test "search for all docs" do
     idx = %Index{name: "all-q",
       document_ids: Set.put(HashSet.new, 0),
