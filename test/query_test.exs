@@ -18,6 +18,7 @@ defmodule QueryTest do
 
     assert length(result.hits) == 1
     assert result.hits |> ids |> Enum.member?(0)
+    assert result.hits |> locations |> length == 0
   end
 
   test "search for specific term" do
@@ -127,7 +128,10 @@ defmodule QueryTest do
     assert r.hits |> locations == [:title]
   end
 
-  # TODO: Test (and impl) ranking!
+  test "ids with more hits before ids with less hits" do
+    r = Search.search(%Query.Term{value: "en"}, ["test-index"])
+    assert r.hits |> ids |> hd == 3
+  end
 
   def ids(hits) when is_list(hits) do
     hits |> Enum.map(fn({id, _}) -> id end)

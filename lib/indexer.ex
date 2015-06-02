@@ -1,5 +1,4 @@
 defmodule Indexer do
-  #import Chronos
 
   def test_corpus() do
     id = 0

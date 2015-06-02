@@ -8,6 +8,7 @@ defmodule Query.Term do
       hits = indices
         |> Stream.flat_map(&term_in(&1, query))
         |> Enum.to_list
+        |> Enum.sort(&Query.Term.hit_frequency/2)
       %Result{ hits: hits }
     end
 
@@ -38,6 +39,10 @@ defmodule Query.Term do
     locs
       |> Stream.filter(fn(%Location{} = l) ->
         Enum.member?(fields, l.field) end)
+  end
+
+  def hit_frequency({i1, ls1}, {i2, ls2}) do
+    Set.size(ls1) > Set.size(ls2)
   end
 end
 
