@@ -10,7 +10,7 @@ defmodule IndexingTest do
 
   test "indexing one doc" do
     index_name = "index1"
-    doc = hd(Indexer.test_corpus)
+    doc = hd(TestUtils.test_corpus)
     {:ok, index} = Store.store(doc, index_name)
     
     assert index.name == index_name

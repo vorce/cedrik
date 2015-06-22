@@ -11,7 +11,7 @@ defmodule QueryTest do
       document_ids: Set.put(HashSet.new, 0),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
-    doc = Indexer.test_corpus |> hd
+    doc = TestUtils.test_corpus |> hd
     Documentstore.put(doc.id, doc)
     Indexstore.put(idx)
     result = Search.search(%Query.MatchAll{}, [idx.name])
