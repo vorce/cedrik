@@ -16,7 +16,7 @@ A for-fun project of writing a small search engine.
     - ☐ Wildcard (Only single leading or single trailing supported now)
 - ☐ Ranking
 - ☐ Highlights
-- ☐ Distributed indices (mnesia?, KVS?, riak?)
+- ☐ Distributed indices (mnesia?, KVS?, riak?, redis?)
 - ☐ Demo web UI (phoenix!)
 
 ## Usage
@@ -42,7 +42,7 @@ For now a token is simply any string separated by spaces.
 
 ### Querying
 
-You can at any time access raw indices via `Indexstore.get/1`, but
+You can at any time access raw indices via `AgentIndex.get/1`, but
 that is not very useful. Luckily Cedrik provides some shortcuts to
 querying its indices.
 

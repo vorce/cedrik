@@ -13,7 +13,7 @@ defmodule Query.Term do
     end
 
     def term_in(index, query) do
-      Indexstore.get(index).terms
+      AgentIndex.get(index).terms
         |> Map.get(query.value, %{}) # Map with docIds as keys
         |> Query.Term.remove_irrelevant(query.fields)
     end
@@ -41,7 +41,7 @@ defmodule Query.Term do
         Enum.member?(fields, l.field) end)
   end
 
-  def hit_frequency({i1, ls1}, {i2, ls2}) do
+  def hit_frequency({_i1, ls1}, {_i2, ls2}) do
     Set.size(ls1) > Set.size(ls2)
   end
 end

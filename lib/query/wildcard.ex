@@ -35,7 +35,7 @@ defmodule Query.Wildcard do
 
     def filtered_terms(index, query, filter_fn) do
       no_wc = String.replace(query.value, "*", "")
-      terms = Indexstore.get(index).terms
+      terms = AgentIndex.get(index).terms
       terms
         |> Map.keys
         |> Stream.filter(&filter_fn.(&1, no_wc))

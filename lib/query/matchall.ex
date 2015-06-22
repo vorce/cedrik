@@ -11,7 +11,7 @@ defmodule Query.MatchAll do
     end
 
     def all_in(index) do
-      Indexstore.get(index).document_ids
+      AgentIndex.get(index).document_ids
         |> Enum.map(fn(id) -> {id, HashSet.new} end) # Locations does not make sense here
     end
   end

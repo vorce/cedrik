@@ -30,6 +30,7 @@ defmodule Cedrik.Mixfile do
     [{:chronos, "~> 1.0.0"},
      #{:kvs, github: "synrc/kvs"},
      {:exredis, ">= 0.1.1"},
+     {:poison, "1.4.0"},
      {:inch_ex, only: :docs},
     ]
   end

@@ -9,11 +9,12 @@ defmodule Indexer do
     def id(map) do
       Map.get(map, :id,
         Map.get(map, "id", :random.uniform * 1000000))
+      |> to_string
     end
 
     def delete(map, index) do
       Documentstore.delete([id(map)])
-      Indexstore.delete_doc(map, index)
+      AgentIndex.delete_doc(map, index)
     end
   end
 
@@ -23,7 +24,7 @@ defmodule Indexer do
   end
 
   def indexed?(id, index) do
-    Indexstore.get(index).document_ids
+    AgentIndex.get(index).document_ids
       |> Enum.member?(id)
   end
 
@@ -39,12 +40,12 @@ defmodule Indexer do
     terms = field_locations(id, doc)
       |> Enum.reduce(&merge_term_locations(&1, &2))
 
-    idx = Indexstore.get(index)
+    idx = AgentIndex.get(index)
       |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
       |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
     
     Documentstore.put(id, doc) # TODO move this?
-    {Indexstore.put(idx), idx}
+    {AgentIndex.put(idx), idx}
   end
 
   def term_locations(id, terms, field) do

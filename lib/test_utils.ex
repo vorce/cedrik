@@ -42,7 +42,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
   defmacro __using__(_) do
     quote location: :keep do
       def setup_corpus() do
-        Indexstore.start_link()
+        AgentIndex.start_link()
         Documentstore.start_link()
         TestUtils.test_corpus()
           |> Enum.each(&Store.store(&1, "test-index"))
