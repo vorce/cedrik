@@ -2,6 +2,7 @@ defmodule TestUtils do
   @moduledoc """
   Handy functions for test code
   """
+
   def test_corpus() do
     id = 0
     [%Document{id: id, title: "Studentbostäder på gång i Majorna",
@@ -43,7 +44,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
     quote location: :keep do
       def setup_corpus() do
         AgentIndex.start_link()
-        Documentstore.start_link()
+        AgentStore.start_link()
         TestUtils.test_corpus()
           |> Enum.each(&Store.store(&1, "test-index"))
 

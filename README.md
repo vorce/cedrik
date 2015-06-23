@@ -33,7 +33,17 @@ Will also run tests which rely on external services. Such as the `RedisIndex` te
 **make sure you have the correct connection_string for redis in config/config.exs**.
 You can use `docker-compose` to get a redis instance up and running quickly.
 
-### Indexing stuff
+### Storing and Indexing
+
+#### Storing
+
+This is not necessarily related to searching. Storing something in Cedrik is just
+a way to retrieve the original content in a straigh-forward manner.
+
+#### Indexing
+
+Indexing on the other hand is the term used in Cedrik for actually constructing an
+inverted index suitable for free text queries.
 
 ##### Note that the following section is going to change very soon
 
@@ -45,7 +55,7 @@ Make sure your struct `@derive [Access, Enumerable]`!
 `Indexer.index_doc/3` will skip indexing of any fields starting with underscore.
 
 After your elixir data structure is indexed, where can you get it?
-From the Documentstore! Just do `Documentstore.get/1`
+From the Store! Just do `AgentStore.get/1`
 
 For examples, check out `test/indexing_test.exs`,
 `lib/document.ex` and `indexer.ex`

@@ -12,7 +12,7 @@ defmodule QueryTest do
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
     doc = TestUtils.test_corpus |> hd
-    Documentstore.put(doc.id, doc)
+    AgentStore.put(doc.id, doc)
     AgentIndex.put(idx)
     result = Search.search(%Query.MatchAll{}, [idx.name])
 

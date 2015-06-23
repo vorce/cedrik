@@ -1,6 +1,10 @@
-defmodule Documentstore do
+defmodule AgentStore do
+  @moduledoc """
+  In-memory document storage
+  """
+
   @doc """
-  Starts a new Documentstore.
+  Starts a new AgentStore.
   """
   def start_link do
     Agent.start_link(fn -> Map.new end, name: __MODULE__)

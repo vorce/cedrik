@@ -4,7 +4,7 @@ defmodule IndexingTest do
 
   setup_all do
     AgentIndex.start_link()
-    Documentstore.start_link()
+    AgentStore.start_link()
     :ok
   end
 

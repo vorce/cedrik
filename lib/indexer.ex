@@ -13,14 +13,15 @@ defmodule Indexer do
     end
 
     def delete(map, index) do
-      Documentstore.delete([id(map)])
+      AgentStore.delete([id(map)])
       AgentIndex.delete_doc(map, index)
     end
   end
 
   def tokenize(text) do
     re = ~r/\W/iu # Match all non-words
-    Regex.split(re, text) |> Enum.filter(fn(w) -> w != "" end)
+    Regex.split(re, text)
+      |> Enum.reject(fn(w) -> w == "" end)
   end
 
   def indexed?(id, index) do
@@ -44,7 +45,7 @@ defmodule Indexer do
       |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
       |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
     
-    Documentstore.put(id, doc) # TODO move this?
+    AgentStore.put(id, doc) # TODO move this?
     {AgentIndex.put(idx), idx}
   end
 
