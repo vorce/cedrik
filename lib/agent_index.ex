@@ -29,8 +29,15 @@ defmodule AgentIndex do
     Agent.get(__MODULE__, &Map.keys(&1))
   end
 
+  def term_positions(term, index) do
+    get(index).terms
+      |> Map.get(term, %{})
+  end
+
   def terms(index) do
     get(index).terms
+      |> Map.keys
+      |> Stream.map(fn(t) -> t end)
   end
 
   def document_ids(index) do

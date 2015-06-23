@@ -12,7 +12,6 @@ defmodule QueryTest do
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
     doc = TestUtils.test_corpus |> hd
-    AgentStore.put(doc.id, doc)
     AgentIndex.put(idx)
     result = Search.search(%Query.MatchAll{}, [idx.name])
 
@@ -24,7 +23,6 @@ defmodule QueryTest do
   test "search for specific term" do
     result = Search.search(%Query.Term{fields: [:title], value: "Pojke"},
       ["test-index"])
-    assert length(result.hits) == 1
     assert result.hits |> ids == ["3"]
   end
 
@@ -40,7 +38,6 @@ defmodule QueryTest do
   test "search for term with multiple hits" do
     result = Search.search(%Query.Term{fields: [:body], value: "att"},
       ["foo", "test-index"])
-    assert length(result.hits) > 1
     assert result.hits |> ids |> Enum.sort == ["0", "1", "2"]
   end
 

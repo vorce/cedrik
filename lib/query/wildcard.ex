@@ -35,11 +35,9 @@ defmodule Query.Wildcard do
 
     def filtered_terms(index, query, filter_fn) do
       no_wc = String.replace(query.value, "*", "")
-      terms = AgentIndex.get(index).terms
-      terms
-        |> Map.keys
+      AgentIndex.terms(index)
         |> Stream.filter(&filter_fn.(&1, no_wc))
-        |> Stream.map(&Map.get(terms, &1, %{}))
+        |> Stream.map(&AgentIndex.term_positions(&1, index))
         |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
         |> Query.Term.remove_irrelevant(query.fields)
     end

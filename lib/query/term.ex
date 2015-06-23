@@ -13,9 +13,8 @@ defmodule Query.Term do
     end
 
     def term_in(index, query) do
-      AgentIndex.terms(index)
-      # AgentIndex.get(index).terms
-        |> Map.get(query.value, %{}) # Map with docIds as keys
+      AgentIndex.term_positions(query.value, index)
+        # |> Map.get(query.value, %{}) # Map with docIds as keys
         |> Query.Term.remove_irrelevant(query.fields)
     end
 

@@ -19,6 +19,12 @@ defmodule Index do
   @doc "Returns all terms known for `index`"
   defcallback terms(index :: String.t) :: Stream.t
 
+  @doc """
+  Returns a map of positions for each document where the term exist. Ex:
+  %{"docId123" => [pos1, pos2], "docIdN" => [pos1]}
+  """
+  defcallback term_positions(term :: String.t, index :: String.t) :: Map.t
+
   @doc "Returns all known document ids for `index`"
   defcallback document_ids(index :: String.t) :: List.t
 end

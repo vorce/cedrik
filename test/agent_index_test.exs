@@ -4,7 +4,6 @@ defmodule AgentIndexTest do
 
   setup_all do
     AgentIndex.start_link()
-    AgentStore.start_link()
     :ok
   end
 
@@ -53,8 +52,8 @@ defmodule AgentIndexTest do
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     AgentIndex.put(idx)
     AgentIndex.delete(idx.name)
-    assert AgentIndex.get(idx.name).document_ids |> Set.size == 0
-    assert AgentIndex.get(idx.name).terms |> Map.keys == []
+    assert AgentIndex.document_ids(idx.name) |> Set.size == 0
+    assert AgentIndex.terms(idx.name) |> Enum.to_list == []
   end
 
   test "delete doc" do
@@ -67,16 +66,16 @@ defmodule AgentIndexTest do
     AgentIndex.index(doc1, index)
     AgentIndex.index(doc2, index)
 
-    assert AgentIndex.get(index).document_ids
+    assert AgentIndex.document_ids(index)
       |> Enum.member?(Store.id(doc1))
-    assert AgentIndex.get(index).terms |> Map.get("cedrik")
+    assert AgentIndex.term_positions("cedrik", index)
       |> Map.has_key?(Store.id(doc1))
 
     AgentIndex.delete_doc(Store.id(doc1), index) #Store.delete(doc1, index)
 
-    assert AgentIndex.get(index).document_ids |> Enum.member?(Store.id(doc2))
-    assert AgentIndex.get(index).document_ids |> Set.size == 1
-    assert AgentIndex.get(index).terms
-      |> Map.get("cedrik") |> Map.keys == [Store.id(doc2)]
+    assert AgentIndex.document_ids(index) |> Enum.member?(Store.id(doc2))
+    assert AgentIndex.document_ids(index) |> Set.size == 1
+    assert AgentIndex.term_positions("cedrik", index)
+      |> Map.keys == [Store.id(doc2)]
   end
 end

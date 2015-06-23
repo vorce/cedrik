@@ -9,7 +9,6 @@ defmodule RedisIndexTest do
   ExUnit.configure(exclude: [external: true])
 
   setup_all do
-    AgentStore.start_link()
     :ok
   end
 
