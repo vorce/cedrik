@@ -1,20 +1,21 @@
 defmodule Indexer do
 
   defimpl Store, for: [Map, Document] do
-    def store(map, index) do
-      Indexer.index(id(map), map, index)
+    def store(doc, index) do
+      #Indexer.index(id(map), map, index)
+      AgentStore.put(id(doc), doc)
     end
 
     # TODO: Use some actual UUID here instead of random
-    def id(map) do
-      Map.get(map, :id,
-        Map.get(map, "id", :random.uniform * 1000000))
+    def id(doc) do
+      Map.get(doc, :id,
+        Map.get(doc, "id", :random.uniform * 1000000))
       |> to_string
     end
 
-    def delete(map, index) do
-      AgentStore.delete([id(map)])
-      AgentIndex.delete_doc(map, index)
+    def delete(doc, index) do
+      AgentStore.delete([id(doc)])
+      #AgentIndex.delete_doc(map, index)
     end
   end
 
@@ -24,29 +25,32 @@ defmodule Indexer do
       |> Enum.reject(fn(w) -> w == "" end)
   end
 
-  def indexed?(id, index) do
-    AgentIndex.get(index).document_ids
+  def indexed?(id, index, type) do
+    type.document_ids(index)
       |> Enum.member?(id)
+    #AgentIndex.get(index).document_ids
+    #  |> Enum.member?(id)
   end
 
-  def index(id, doc, index) do
-    case indexed?(id, index) do
-      true -> IO.puts("Document #{id} already present in #{index}")
-      false -> index_doc(id, doc, index)
+  def index(id, doc, index, type) do
+    case indexed?(id, index, type) do
+      true -> IO.puts("Document #{id} already present in #{index} (type: #{type})")
+      false -> index_doc(id, doc, index, type)
     end
   end
 
-  def index_doc(id, doc, index) do
-    IO.puts("Indexing document with id #{id} into #{index}")
-    terms = field_locations(id, doc)
-      |> Enum.reduce(&merge_term_locations(&1, &2))
+  def index_doc(id, doc, index, type) do
+    IO.puts("Indexing document with id #{id} into #{index} (type: #{type})")
+    #terms = field_locations(id, doc)
+    #  |> Enum.reduce(&merge_term_locations(&1, &2))
 
-    idx = AgentIndex.get(index)
-      |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
-      |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
+    type.index(doc, index, type)
+    #idx = AgentIndex.get(index)
+    #  |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
+    #  |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
     
-    AgentStore.put(id, doc) # TODO move this?
-    {AgentIndex.put(idx), idx}
+    #AgentStore.put(id, doc) # TODO move this?
+    #{AgentIndex.put(idx), idx}
   end
 
   def term_locations(id, terms, field) do

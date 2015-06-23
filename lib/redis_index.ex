@@ -2,12 +2,17 @@ defmodule RedisIndex do
   @moduledoc """
   Redis as a backend for cedrik indices
   """
-  
+  @behaviour Index
+
   use Exredis
 
   defp redis() do
     Application.get_all_env(:redis)[:connection_string]
       |> start_using_connection_string()
+  end
+
+  def id(thing) do
+    Store.id(thing)
   end
 
   @doc """
@@ -58,7 +63,8 @@ defmodule RedisIndex do
   @doc """
   Index a document in redis
   """
-  def index(id, doc, index) do
+  def index(doc, index) do
+    id = id(doc)
     term_map = Indexer.field_locations(id, doc)
       |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
     index_raw(index, term_map, id)

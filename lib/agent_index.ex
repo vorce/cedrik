@@ -2,11 +2,40 @@ defmodule AgentIndex do
   @moduledoc """
   In-memory index
   """
+  @behaviour Index
 
   @derive [Access]
-  defstruct name: "index1", document_ids: HashSet.new, terms: Map.new
-  @type t :: %AgentIndex{name: String.t, document_ids: Set.t, terms: Map.t}
+  defstruct name: "index1", document_ids: HashSet.new, terms: Map.new, type: :agent
+  @type t :: %AgentIndex{name: String.t, document_ids: Set.t, terms: Map.t, type: Atom.t}
   # Terms look like: %{"word1" => %{docId1 => [pos1, pos2], docId2 => [pos3]}, "word2" => %{...}}
+
+  def index(doc, index) do
+    id = id(doc)
+    terms = Indexer.field_locations(id, doc)
+      |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
+
+    idx = get(index)
+      |> update_in([:terms], fn(ts) -> Indexer.merge_term_locations(ts, terms) end)
+      |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
+    
+    put(idx)
+  end
+
+  def id(thing) do
+    Store.id(thing)
+  end
+
+  def indices() do
+    Agent.get(__MODULE__, &Map.keys(&1))
+  end
+
+  def terms(index) do
+    get(index).terms
+  end
+
+  def document_ids(index) do
+    get(index).document_ids
+  end
 
   @doc """
   Starts a new AgentIndex which stores index info in an Agent.
@@ -40,8 +69,7 @@ defmodule AgentIndex do
   @doc """
   Deletes the terms and id of the doc in the index
   """
-  def delete_doc(doc, index_name) do
-    did = Store.id(doc)
+  def delete_doc(did, index_name) do
     IO.puts("Deleting document #{did} from index #{index_name}")
 
     doc_ids = get(index_name).document_ids

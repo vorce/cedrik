@@ -17,7 +17,7 @@ defmodule RedisIndexTest do
     index_name = "redis_index1"
     doc = hd(TestUtils.test_corpus)
     
-    RedisIndex.index(Store.id(doc), doc, index_name)
+    RedisIndex.index(doc, index_name)
     
     assert RedisIndex.indices() |> Enum.member?(index_name)
     assert RedisIndex.document_ids(index_name) |> length == 1

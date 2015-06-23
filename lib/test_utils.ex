@@ -46,8 +46,10 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
         AgentIndex.start_link()
         AgentStore.start_link()
         TestUtils.test_corpus()
-          |> Enum.each(&Store.store(&1, "test-index"))
-
+          |> Enum.each(fn(doc) ->
+              Store.store(doc, "test-index")
+              AgentIndex.index(doc, "test-index")
+            end)
         :ok
       end
 

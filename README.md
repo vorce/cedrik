@@ -3,7 +3,7 @@
 
 # Cedrik
 
-A for-fun project of writing a small search engine suitable for Small Data™ .
+A for-fun project of writing a small, naive search engine suitable for Small Data™ .
 
 ## (planned) features
 

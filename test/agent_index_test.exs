@@ -1,4 +1,4 @@
-defmodule IndexingTest do
+defmodule AgentIndexTest do
   use ExUnit.Case, async: true
   use TestUtils
 
@@ -11,10 +11,11 @@ defmodule IndexingTest do
   test "indexing one doc" do
     index_name = "index1"
     doc = hd(TestUtils.test_corpus)
-    {:ok, index} = Store.store(doc, index_name)
-    
+    :ok = AgentIndex.index(doc, index_name)
+    index = AgentIndex.get(index_name)
+
     assert index.name == index_name
-    assert Set.size(index.document_ids) == 1
+    assert index.document_ids |> Set.size() == 1
     assert Set.member?(index.document_ids, Store.id(doc))
     assert Map.size(index.terms) > 0
   end
@@ -27,7 +28,8 @@ defmodule IndexingTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    {:ok, index} = Store.store(my_doc, "test-index2")
+    :ok = AgentIndex.index(my_doc, "test-index2") #Store.store(my_doc, "test-index2")
+    index = AgentIndex.get("test-index2")
 
     assert Set.member?(index.document_ids, Store.id(my_doc))
     assert Map.size(index.terms) > 0
@@ -62,15 +64,15 @@ defmodule IndexingTest do
     doc2 = %{:id => 91_000,
       :text => "nattens i term cedrik vara få dag en att bar foo hello"}
 
-    Store.store(doc1, index)
-    Store.store(doc2, index)
+    AgentIndex.index(doc1, index)
+    AgentIndex.index(doc2, index)
 
     assert AgentIndex.get(index).document_ids
       |> Enum.member?(Store.id(doc1))
     assert AgentIndex.get(index).terms |> Map.get("cedrik")
       |> Map.has_key?(Store.id(doc1))
 
-    Store.delete(doc1, index)
+    AgentIndex.delete_doc(Store.id(doc1), index) #Store.delete(doc1, index)
 
     assert AgentIndex.get(index).document_ids |> Enum.member?(Store.id(doc2))
     assert AgentIndex.get(index).document_ids |> Set.size == 1
