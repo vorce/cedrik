@@ -1,9 +1,10 @@
 defmodule AgentIndexTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case #, async: true
   use TestUtils
 
   setup_all do
     AgentIndex.start_link()
+    Application.put_env(:index, :backend, AgentIndex)
     :ok
   end
 
@@ -27,7 +28,7 @@ defmodule AgentIndexTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    :ok = AgentIndex.index(my_doc, "test-index2") #Store.store(my_doc, "test-index2")
+    :ok = AgentIndex.index(my_doc, "test-index2")
     index = AgentIndex.get("test-index2")
 
     assert Set.member?(index.document_ids, Store.id(my_doc))
@@ -71,7 +72,7 @@ defmodule AgentIndexTest do
     assert AgentIndex.term_positions("cedrik", index)
       |> Map.has_key?(Store.id(doc1))
 
-    AgentIndex.delete_doc(Store.id(doc1), index) #Store.delete(doc1, index)
+    AgentIndex.delete_doc(Store.id(doc1), index)
 
     assert AgentIndex.document_ids(index) |> Enum.member?(Store.id(doc2))
     assert AgentIndex.document_ids(index) |> Set.size == 1

@@ -13,8 +13,7 @@ defmodule Query.Term do
     end
 
     def term_in(index, query) do
-      AgentIndex.term_positions(query.value, index)
-        # |> Map.get(query.value, %{}) # Map with docIds as keys
+      Application.get_all_env(:index)[:backend].term_positions(query.value, index)
         |> Query.Term.remove_irrelevant(query.fields)
     end
 

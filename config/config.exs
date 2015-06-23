@@ -15,6 +15,11 @@ use Mix.Config
 #       format: "$date $time [$level] $metadata$message\n",
 #       metadata: [:user_id]
 
+config :index,
+  backend: AgentIndex # Valid backends MUST use the Indexer behaviour.
+
+# Only needs to be specified when using the RedisIndex backend
+# and when running the external tests.
 config :redis,
   connection_string: "redis://192.168.59.103:6379"
 

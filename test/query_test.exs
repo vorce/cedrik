@@ -11,7 +11,6 @@ defmodule QueryTest do
       document_ids: Set.put(HashSet.new, "0"),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
-    doc = TestUtils.test_corpus |> hd
     AgentIndex.put(idx)
     result = Search.search(%Query.MatchAll{}, [idx.name])
 

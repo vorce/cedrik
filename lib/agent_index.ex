@@ -2,7 +2,7 @@ defmodule AgentIndex do
   @moduledoc """
   In-memory index
   """
-  @behaviour Index
+  @behaviour Indexer
 
   @derive [Access]
   defstruct name: "index1", document_ids: HashSet.new, terms: Map.new, type: :agent
@@ -79,13 +79,14 @@ defmodule AgentIndex do
   def delete_doc(did, index_name) do
     IO.puts("Deleting document #{did} from index #{index_name}")
 
-    doc_ids = get(index_name).document_ids
+    doc_ids = document_ids(index_name)
       |> Stream.reject(fn(x) -> x == did end)
 
-    mod_terms = get(index_name).terms
-      |> Stream.filter(fn({_term, pos}) -> Map.has_key?(pos, did) end)
-      |> Stream.map(fn({term, pos}) ->
-          {term, Map.drop(pos, [did])}
+    mod_terms = terms(index_name)
+      |> Stream.map(fn(t) -> {t, term_positions(t, index_name)} end)
+      |> Stream.filter(fn({_t, pos}) -> Map.has_key?(pos, did) end)
+      |> Stream.map(fn({t, pos}) ->
+          {t, Map.drop(pos, [did])}
         end)
       |> Enum.into(%{})
 

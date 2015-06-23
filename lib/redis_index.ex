@@ -2,7 +2,7 @@ defmodule RedisIndex do
   @moduledoc """
   Redis as a backend for cedrik indices
   """
-  @behaviour Index
+  @behaviour Indexer
 
   use Exredis
 
@@ -15,26 +15,18 @@ defmodule RedisIndex do
     Store.id(thing)
   end
 
-  @doc """
-  Returns all existing indices
-  """
   def indices() do
     redis()
       |>  query(["SMEMBERS", ".indices"])
   end
 
-  @doc """
-  Returns the document ids that exist in the index
-  """
   def document_ids(index) do
     redis()
       |> query(["SMEMBERS", index <> ".document_ids"])
+      |> Enum.into(HashSet.new)
       # |> Stream.map(fn(id) -> id end)
   end
 
-  @doc """
-  Returns a stream of terms that exist in the index
-  """
   def terms(index) do
     redis()
       |> query(["SMEMBERS", index <> ".terms"])
@@ -48,8 +40,29 @@ defmodule RedisIndex do
   def term_positions(term, index) do
     redis()
       |> query(["SMEMBERS", index <> "_" <> term])
-      |> Stream.map(&Poison.decode!(&1))
+      |> Stream.map(&Poison.decode!(&1)) # [%{"3" => [%{"field" => "title", "position" => 0}]}]
+      |> Stream.map(&to_structure(&1))
       |> Enum.reduce(%{}, &merge_term_positions(&1, &2))
+  end
+
+  # input: %{"3" => [%{"field" => "title", "position" => 0}]}
+  # output: %{"3" => HashSet<%Location{:field => :title, :position => 0}>}
+  def to_structure(raw) do
+    k = hd(Map.keys(raw))
+    v = Map.get(raw, k)
+    Map.put(%{}, k, to_locations(v))
+  end
+
+  # input: %{"field" => "title", "position" => 0}
+  # output: HashSet<%Location{:field => :title, :position => 0}>
+  def to_locations(raw) do
+    raw
+      |> Enum.map(fn(locs) ->
+        Map.put(%{}, :field, Map.get(locs, "field") |> String.to_atom)
+          |> Map.put(:position, Map.get(locs, "position"))
+      end)
+      |> Enum.map(&struct(Location, &1))
+      |> Enum.into(HashSet.new)
   end
 
   def merge_term_positions(tp1, tp2) do
@@ -91,17 +104,37 @@ defmodule RedisIndex do
   @doc """
   Deletes the doc (its terms and document id)
   """
-  def delete_doc(doc, index) do
+  def delete_doc(did, index) do
+    IO.puts("Deleting document #{did} from index #{index}")
+
+    doc_ids = document_ids(index)
+      |> Stream.reject(fn(x) -> x == did end)
+
+    mod_terms = terms(index)
+      |> Stream.filter(fn({_term, pos}) -> Map.has_key?(pos, did) end)
+      |> Stream.map(fn({term, pos}) ->
+          {term, Map.drop(pos, [did])}
+        end)
+      |> Enum.into(%{})
+
+    redis()
+      |> query_pipe([["SREM", index <> ".document_ids", did]])
+      # TODO: Go through the terms of this document, for each of them
+      # SREM from index <> "_" term
   end
 
   @doc """
   Deletes the index
   """
   def delete(index) do
-    # 1. delete all keys in <index>.terms
-    # 2. delete index.terms
-    # 3. delete index.document_ids
-    # 4. delete index from .indices
+    queries = terms(index)
+      |> Stream.map(fn(t) -> ["DEL", index <> "_" <> t] end) # delete all keys in <index>.terms
+      |> Stream.concat([["SREM", ".indices", index]]) # delete index from .indices
+      |> Stream.concat([["DEL", index <> ".terms"]]) # delete index term
+      |> Stream.concat([["DEL", index <> ".document_ids"]]) # and document ids
+
+    redis()
+      |> query_pipe(queries |> Enum.to_list)
   end
 end
 
