@@ -46,7 +46,7 @@ defmodule IndexingTest do
   end
 
   test "delete index" do
-    idx = %Index{name: "cedrekked",
+    idx = %AgentIndex{name: "cedrekked",
       document_ids: Set.put(HashSet.new, 0),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     AgentIndex.put(idx)

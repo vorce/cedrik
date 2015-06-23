@@ -1,4 +1,13 @@
 defmodule AgentIndex do
+  @moduledoc """
+  In-memory index
+  """
+
+  @derive [Access]
+  defstruct name: "index1", document_ids: HashSet.new, terms: Map.new
+  @type t :: %AgentIndex{name: String.t, document_ids: Set.t, terms: Map.t}
+  # Terms look like: %{"word1" => %{docId1 => [pos1, pos2], docId2 => [pos3]}, "word2" => %{...}}
+
   @doc """
   Starts a new AgentIndex which stores index info in an Agent.
   """
@@ -11,7 +20,7 @@ defmodule AgentIndex do
   creates a new index.
   """
   def get(key) do
-    Agent.get(__MODULE__, &Map.get(&1, key, %Index{name: key}))
+    Agent.get(__MODULE__, &Map.get(&1, key, %AgentIndex{name: key}))
   end
 
   @doc """

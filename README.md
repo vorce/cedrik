@@ -3,11 +3,11 @@
 
 # Cedrik
 
-A for-fun project of writing a small search engine.
+A for-fun project of writing a small search engine suitable for Small Data™ .
 
 ## (planned) features
 
-- ☑ Indexing 
+- ☑ Indexing
 - Queries:
     - ☑ MatchAll
     - ☑ Term (☐ boosting)
@@ -21,19 +21,33 @@ A for-fun project of writing a small search engine.
 
 ## Usage
 
+### Tests
+
+    mix test
+
+Will run all unit and in-memory tests.
+
+    mix test --include external:true
+
+Will also run tests which rely on external services. Such as the `RedisIndex` tests,
+**make sure you have the correct connection_string for redis in config/config.exs**.
+You can use `docker-compose` to get a redis instance up and running quickly.
+
 ### Indexing stuff
+
+##### Note that the following section is going to change very soon
 
 Cedrik can take any Elixir map and index its contents for searching.
 I would recommend creating a struct, with an id field, that
 implements the Store protocol. Look at the example implementation
-for Map and Document in indexer.ex.
+for Map and Document in `indexer.ex`.
 Make sure your struct `@derive [Access, Enumerable]`!
 `Indexer.index_doc/3` will skip indexing of any fields starting with underscore.
 
 After your elixir data structure is indexed, where can you get it?
 From the Documentstore! Just do `Documentstore.get/1`
 
-For examples, check out `test/cedrik_test.exs`,
+For examples, check out `test/indexing_test.exs`,
 `lib/document.ex` and `indexer.ex`
 
 #### Tokenizing

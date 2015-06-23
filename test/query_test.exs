@@ -7,7 +7,7 @@ defmodule QueryTest do
   end
 
   test "search for all docs" do
-    idx = %Index{name: "all-q",
+    idx = %AgentIndex{name: "all-q",
       document_ids: Set.put(HashSet.new, "0"),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
     
