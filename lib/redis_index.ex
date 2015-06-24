@@ -80,25 +80,30 @@ defmodule RedisIndex do
     id = id(doc)
     term_map = Indexer.field_locations(id, doc)
       |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
-    index_raw(index, term_map, id)
+
+    result = index_raw(index, term_map, id)
+    case result |> List.keymember?(:error, 0) do # TODO: Verify that :error is actually returned from redis
+      true -> :error
+      _ -> :ok
+    end
   end
 
   defp index_raw(index, term_map, docid) do
-    client = redis()
-    term_map
+    queries = term_map
       |> Map.keys
       |> Stream.map(fn(t) ->
           {t, merge_term_positions(Map.get(term_map, t),
             term_positions(t, index))}
         end)
-      |> Stream.each(fn({t, tm}) ->
-          client |>
-            query_pipe([["SADD", index <> "_" <> t, Poison.encode!(tm)],
-              ["SADD", index <> ".terms", t],
-              ["SADD", index <> ".document_ids", docid],
-              ["SADD", ".indices", index]])
+      |> Stream.flat_map(fn({t, tm}) ->
+            [["SADD", index <> "_" <> t, Poison.encode!(tm)],
+              ["SADD", index <> ".terms", t]]
         end)
-      |> Stream.run
+      |> Stream.concat([["SADD", index <> ".document_ids", docid]])
+      |> Stream.concat([["SADD", ".indices", index]])
+      
+      redis() |>
+        query_pipe(queries |> Enum.to_list)
   end
 
   @doc """
