@@ -21,6 +21,7 @@ defmodule AgentIndexTest do
   end
 
   test "indexing custom doc" do
+    index = "test-index2"
     my_doc = %{:id => 123,
       :field1 => "searchable field1",
       :_field2 => "not searchable cause _ prefix field2",
@@ -28,33 +29,28 @@ defmodule AgentIndexTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    :ok = AgentIndex.index(my_doc, "test-index2")
-    index = AgentIndex.get("test-index2")
+    
+    :ok = AgentIndex.index(my_doc, index)
 
-    assert Set.member?(index.document_ids, Store.id(my_doc))
-    assert Map.size(index.terms) > 0
-    assert Search.search(%Query.Term{value: "field1"}, [index.name]).hits
-      |> ids == ["123"]
-    assert Search.search(%Query.Term{value: "field2"}, [index.name]).hits
-      |> ids == []
-    assert Search.search(%Query.Term{value: "field3"}, [index.name]).hits
-      |> ids == ["123"]
-    assert Search.search(%Query.Term{value: "field4"}, [index.name]).hits
-      |> ids == []
-    assert Search.search(%Query.Term{value: "field5"}, [index.name]).hits
-      |> ids == []
-    assert Search.search(%Query.Term{value: "field6"}, [index.name]).hits
-      |> ids == []
+    assert Set.member?(AgentIndex.document_ids(index), Store.id(my_doc))
+    assert AgentIndex.terms(index) |> Enum.to_list |> Enum.sort ==
+      ["field1", "field3", "searchable"]
+    tps = AgentIndex.term_positions("searchable", index)
+    assert tps |> Map.get(AgentIndex.id(my_doc), HashSet.new) |> Set.size == 2
   end
 
   test "delete index" do
-    idx = %AgentIndex{name: "cedrekked",
-      document_ids: Set.put(HashSet.new, 0),
-      terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
-    AgentIndex.put(idx)
-    AgentIndex.delete(idx.name)
-    assert AgentIndex.document_ids(idx.name) |> Set.size == 0
-    assert AgentIndex.terms(idx.name) |> Enum.to_list == []
+    doc = %{:id => 0, :body => "foo"}
+    index = "agent_cedrekked"
+
+    AgentIndex.index(doc, index)
+    assert AgentIndex.document_ids(index) |> Set.size == 1
+    assert AgentIndex.terms(index) |> Enum.to_list == ["foo"]
+
+    AgentIndex.delete(index)
+
+    assert AgentIndex.document_ids(index) |> Set.size == 0
+    assert AgentIndex.terms(index) |> Enum.to_list == []
   end
 
   test "delete doc" do

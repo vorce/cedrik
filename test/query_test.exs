@@ -4,6 +4,7 @@ defmodule QueryTest do
 
   setup_all do
     setup_corpus()
+    Application.put_env(:index, :backend, AgentIndex)
   end
 
   test "search for all docs" do

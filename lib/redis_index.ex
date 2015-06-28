@@ -89,18 +89,25 @@ defmodule RedisIndex do
   end
 
   defp index_raw(index, term_map, docid) do
+    #IO.inspect(term_map)
     queries = term_map
       |> Map.keys
       |> Stream.map(fn(t) ->
           {t, merge_term_positions(Map.get(term_map, t),
             term_positions(t, index))}
         end)
-      |> Stream.flat_map(fn({t, tm}) ->
-            [["SADD", index <> "_" <> t, Poison.encode!(tm)],
-              ["SADD", index <> ".terms", t]]
+      |> Stream.flat_map(fn({t, locs}) ->
+          # We actually re-create the whole set for the term in the index
+          # Could optimize this.
+          tl = for {id, loc} <- locs, do:
+            ["SADD", index <> "_" <> t, Poison.encode!(Map.put(%{}, id, loc))]
+          Enum.concat([["DEL", index <> "_" <> t]], tl)
+            |> Enum.concat([["SADD", index <> ".terms", t]])
         end)
       |> Stream.concat([["SADD", index <> ".document_ids", docid]])
       |> Stream.concat([["SADD", ".indices", index]])
+
+      #IO.inspect(queries |> Enum.to_list)
       
       redis() |>
         query_pipe(queries |> Enum.to_list)
@@ -116,6 +123,7 @@ defmodule RedisIndex do
       |> Stream.reject(fn(x) -> x == did end)
 
     mod_terms = terms(index)
+      |> Stream.map(fn(t) -> {t, term_positions(t, index)} end)
       |> Stream.filter(fn({_term, pos}) -> Map.has_key?(pos, did) end)
       |> Stream.map(fn({term, pos}) ->
           {term, Map.drop(pos, [did])}
