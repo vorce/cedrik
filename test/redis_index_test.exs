@@ -57,7 +57,19 @@ defmodule RedisIndexTest do
     assert RedisIndex.terms(index) |> Enum.to_list == []
   end
 
-  # TODO not implemented yet
+  test "delete old terms" do
+    index = "test-index-delete2"
+    doc1 = %{:id => 93_000,
+      :text => "hello foo bar att en dag få vara cedrik term i nattens"}
+
+    RedisIndex.index(doc1, index)
+
+    assert RedisIndex.term_positions("cedrik", index) |> Map.has_key?(Store.id(doc1))
+
+    RedisIndex.delete_old_terms(["cedrik"], Store.id(doc1), index)
+    assert RedisIndex.term_positions("cedrik", index) == %{}
+  end
+
   test "delete doc" do
     index = "test-index-delete"
     doc1 = %{:id => 90_000,
@@ -78,8 +90,7 @@ defmodule RedisIndexTest do
     assert RedisIndex.document_ids(index) |> Enum.member?(Store.id(doc2))
     assert RedisIndex.document_ids(index) |> Set.size == 1
     
-    #TODO:
-    #assert RedisIndex.term_positions("cedrik", index)
-    #  |> Map.keys == [Store.id(doc2)]
+    assert RedisIndex.term_positions("cedrik", index)
+      |> Map.keys == [Store.id(doc2)]
   end
 end

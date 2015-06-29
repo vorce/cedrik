@@ -89,7 +89,6 @@ defmodule RedisIndex do
   end
 
   defp index_raw(index, term_map, docid) do
-    #IO.inspect(term_map)
     queries = term_map
       |> Map.keys
       |> Stream.map(fn(t) ->
@@ -97,20 +96,32 @@ defmodule RedisIndex do
             term_positions(t, index))}
         end)
       |> Stream.flat_map(fn({t, locs}) ->
-          # We actually re-create the whole set for the term in the index
-          # Could optimize this.
           tl = for {id, loc} <- locs, do:
             ["SADD", index <> "_" <> t, Poison.encode!(Map.put(%{}, id, loc))]
-          Enum.concat([["DEL", index <> "_" <> t]], tl)
+          tl
             |> Enum.concat([["SADD", index <> ".terms", t]])
         end)
       |> Stream.concat([["SADD", index <> ".document_ids", docid]])
       |> Stream.concat([["SADD", ".indices", index]])
 
-      #IO.inspect(queries |> Enum.to_list)
-      
       redis() |>
         query_pipe(queries |> Enum.to_list)
+  end
+
+  # TODO: Will need this for deleting all terms of
+  # an already existing document (fetch it from store, get all terms) when
+  # you would like to overwrite...
+  def delete_old_terms(terms, docid, index) do
+    client = redis()
+    queries = terms
+      |> Stream.map(fn(t) -> {t, client |> query(["SMEMBERS", index <> "_" <> t])} end)
+      |> Stream.reject(fn({_t, locs}) -> locs == [] end)
+      |> Stream.map(fn({t, locs}) -> {t, Poison.decode!(locs)} end)
+      |> Stream.filter(fn({_t, m}) -> Map.keys(m) |> hd == docid end)
+      |> Stream.map(fn({t, m}) -> ["SREM", index <> "_" <> t, Poison.encode!(m)] end)
+
+      client
+        |> query_pipe(queries |> Enum.to_list)
   end
 
   @doc """
@@ -119,21 +130,17 @@ defmodule RedisIndex do
   def delete_doc(did, index) do
     IO.puts("Deleting document #{did} from index #{index}")
 
-    doc_ids = document_ids(index)
-      |> Stream.reject(fn(x) -> x == did end)
-
-    mod_terms = terms(index)
+    queries = terms(index)
       |> Stream.map(fn(t) -> {t, term_positions(t, index)} end)
       |> Stream.filter(fn({_term, pos}) -> Map.has_key?(pos, did) end)
+      |> Stream.map(fn({t, pos}) -> {t, Map.put(%{}, did, Map.get(pos, did))} end)
       |> Stream.map(fn({term, pos}) ->
-          {term, Map.drop(pos, [did])}
+          ["SREM", index <> "_" <> term, Poison.encode!(pos)]
         end)
-      |> Enum.into(%{})
+      |> Stream.concat([["SREM", index <> ".document_ids", did]])
 
     redis()
-      |> query_pipe([["SREM", index <> ".document_ids", did]])
-      # TODO: Go through the terms of this document, for each of them
-      # SREM from index <> "_" term
+      |> query_pipe(queries |> Enum.to_list)
   end
 
   @doc """
