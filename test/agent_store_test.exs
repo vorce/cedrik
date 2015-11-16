@@ -8,9 +8,9 @@ defmodule AgentStoreTest do
 
   test "store and get doc" do
     doc = %{:id => "AgentStoreTest_id1", :foo => "bar"}
-    
+
     AgentStore.put(Store.id(doc), doc)
-    
+
     stored = AgentStore.get(Store.id(doc))
     assert stored.id == Store.id(doc)
     assert stored.foo == "bar"

@@ -4,20 +4,20 @@ defmodule AgentIndex do
   """
   @behaviour Indexer
 
-  @derive [Access]
   defstruct name: "index1", document_ids: HashSet.new, terms: Map.new, type: :agent
   @type t :: %AgentIndex{name: String.t, document_ids: Set.t, terms: Map.t, type: Atom.t}
   # Terms look like: %{"word1" => %{docId1 => [pos1, pos2], docId2 => [pos3]}, "word2" => %{...}}
 
   def index(doc, index) do
     id = id(doc)
+
     terms = Indexer.field_locations(id, doc)
-      |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
+    |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
 
     idx = get(index)
-      |> update_in([:terms], fn(ts) -> Indexer.merge_term_locations(ts, terms) end)
-      |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
-    
+    |> Map.update(:terms, %{}, fn(ts) -> Indexer.merge_term_locations(ts, terms) end)
+    |> Map.update(:document_ids, HashSet.new, fn(ids) -> Set.put(ids, id) end)
+
     put(idx)
   end
 
@@ -31,13 +31,13 @@ defmodule AgentIndex do
 
   def term_positions(term, index) do
     get(index).terms
-      |> Map.get(term, %{})
+    |> Map.get(term, %{})
   end
 
   def terms(index) do
     get(index).terms
-      |> Map.keys
-      |> Stream.map(fn(t) -> t end)
+    |> Map.keys
+    |> Stream.map(fn(t) -> t end)
   end
 
   def document_ids(index) do
@@ -80,23 +80,22 @@ defmodule AgentIndex do
     IO.puts("Deleting document #{did} from index #{index_name}")
 
     doc_ids = document_ids(index_name)
-      |> Stream.reject(fn(x) -> x == did end)
+    |> Stream.reject(fn(x) -> x == did end)
 
     mod_terms = terms(index_name)
-      |> Stream.map(fn(t) -> {t, term_positions(t, index_name)} end)
-      |> Stream.filter(fn({_t, pos}) -> Map.has_key?(pos, did) end)
-      |> Stream.map(fn({t, pos}) ->
-          {t, Map.drop(pos, [did])}
-        end)
-      |> Enum.into(%{})
+    |> Stream.map(fn(t) -> {t, term_positions(t, index_name)} end)
+    |> Stream.filter(fn({_t, pos}) -> Map.has_key?(pos, did) end)
+    |> Stream.map(fn({t, pos}) ->
+        {t, Map.drop(pos, [did])}
+      end)
+    |> Enum.into(%{})
 
     get(index_name)
-      |> update_in([:document_ids], fn(_ids) ->
-        doc_ids |> Enum.into(HashSet.new) end)
-      |> update_in([:terms], fn(x) ->
-          Map.merge(x, mod_terms)
-        end)
-      |> put
+    |> Map.update(:document_ids, HashSet.new, fn(_ids) ->
+      doc_ids |> Enum.into(HashSet.new) end)
+    |> Map.update(:terms, %{}, fn(x) ->
+        Map.merge(x, mod_terms)
+      end)
+    |> put
   end
 end
-

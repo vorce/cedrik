@@ -14,7 +14,8 @@ defmodule Cedrik.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger]]
+    [mod: {Cedrik, []},
+     applications: [:logger]]
   end
 
   # Dependencies can be Hex packages:
@@ -27,10 +28,10 @@ defmodule Cedrik.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:chronos, "~> 1.0.0"},
+    [{:chronos, "~> 1.5"},
      #{:kvs, github: "synrc/kvs"},
-     {:exredis, ">= 0.1.1"},
-     {:poison, "1.4.0"},
+     {:exredis, "~> 0.2.2"},
+     {:poison, "~> 1.5"},
      {:inch_ex, only: :docs},
     ]
   end

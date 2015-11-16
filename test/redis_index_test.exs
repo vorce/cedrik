@@ -1,6 +1,6 @@
 defmodule RedisIndexTest do
   use ExUnit.Case #, async: true
-  use TestUtils
+  alias TestUtils
 
   @moduletag :external
 
@@ -16,9 +16,9 @@ defmodule RedisIndexTest do
   test "indexing one doc" do
     index_name = "redis_index1"
     doc = hd(TestUtils.test_corpus)
-    
+
     RedisIndex.index(doc, index_name)
-    
+
     assert RedisIndex.indices() |> Enum.member?(index_name)
     assert RedisIndex.document_ids(index_name) |> Set.size() == 1
     assert RedisIndex.document_ids(index_name) |> Set.member?(Store.id(doc))
@@ -35,12 +35,12 @@ defmodule RedisIndexTest do
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
     :ok = RedisIndex.index(my_doc, index)
-    
+
     assert Set.member?(RedisIndex.document_ids(index), Store.id(my_doc))
     assert RedisIndex.terms(index) |> Enum.to_list |> Enum.sort ==
       ["field1", "field3", "searchable"]
     tps = RedisIndex.term_positions("searchable", index)
-    assert tps |> Map.get(RedisIndex.id(my_doc), HashSet.new) |> Set.size == 2 
+    assert tps |> Map.get(RedisIndex.id(my_doc), HashSet.new) |> Set.size == 2
   end
 
   test "delete index" do
@@ -89,7 +89,7 @@ defmodule RedisIndexTest do
 
     assert RedisIndex.document_ids(index) |> Enum.member?(Store.id(doc2))
     assert RedisIndex.document_ids(index) |> Set.size == 1
-    
+
     assert RedisIndex.term_positions("cedrik", index)
       |> Map.keys == [Store.id(doc2)]
   end

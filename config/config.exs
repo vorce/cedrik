@@ -15,13 +15,14 @@ use Mix.Config
 #       format: "$date $time [$level] $metadata$message\n",
 #       metadata: [:user_id]
 
-config :index,
+config :cedrik,
   backend: AgentIndex # Valid backends MUST use the Indexer behaviour.
 
 # Only needs to be specified when using the RedisIndex backend
 # and when running the external tests.
-config :redis,
-  connection_string: "redis://192.168.59.103:6379"
+config :exredis,
+  host: "docker",
+  port: 6379
 
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
@@ -30,5 +31,3 @@ config :redis,
 # here (which is why it is important to import them last).
 #
 #import_config "#{Mix.env}.exs"
-
-

@@ -1,32 +1,30 @@
 defmodule Indexer do
-  use Behaviour
-
   @doc "Index `thing` into the destination `index`"
-  defcallback index(thing :: any, index :: String.t) :: Atom.t
+  @callback index(thing :: any, index :: String.t) :: Atom.t
 
   @doc "Uniquely identify the `thing`, must return a string"
-  defcallback id(thing :: any) :: String.t
+  @callback id(thing :: any) :: String.t
 
   @doc "Delete `index` and its contents"
-  defcallback delete(index :: String.t) :: Atom.t
+  @callback delete(index :: String.t) :: Atom.t
 
   @doc "Delete a document with `docid` from `index`"
-  defcallback delete_doc(docid :: String.t, index :: String.t) :: Atom.t
+  @callback delete_doc(docid :: String.t, index :: String.t) :: Atom.t
 
   @doc "Returns all known indices"
-  defcallback indices() :: List.t
+  @callback indices() :: List.t
 
   @doc "Returns all terms known for `index`"
-  defcallback terms(index :: String.t) :: Stream.t
+  @callback terms(index :: String.t) :: Stream.t
 
   @doc """
   Returns a map of positions for each document where the term exist. Ex:
   %{"docId123" => [pos1, pos2], "docIdN" => [pos1]}
   """
-  defcallback term_positions(term :: String.t, index :: String.t) :: Map.t
+  @callback term_positions(term :: String.t, index :: String.t) :: Map.t
 
   @doc "Returns all known document ids for `index`"
-  defcallback document_ids(index :: String.t) :: List.t
+  @callback document_ids(index :: String.t) :: List.t
 
   def tokenize(text) do
     re = ~r/\W/iu # Match all non-words
@@ -55,7 +53,7 @@ defmodule Indexer do
     #idx = AgentIndex.get(index)
     #  |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
     #  |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
-    
+
     # AgentStore.put(id, doc) # TODO move this?
     #{AgentIndex.put(idx), idx}
   end
@@ -81,9 +79,10 @@ defmodule Indexer do
 
   def field_locations(id, doc) when is_map(doc) do
     doc
-      |> Enum.filter(&should_index?(&1))
-      |> Enum.flat_map(fn({k, v}) ->
-        term_locations(id, tokenize(v), k) end)
+    |> Map.to_list() 
+    |> Enum.filter(&should_index?(&1))
+    |> Enum.flat_map(fn({k, v}) ->
+      term_locations(id, tokenize(v), k) end)
   end
 
   def should_index?({key, val}) when is_atom(key) and is_binary(val) do
@@ -101,5 +100,3 @@ defmodule Indexer do
   end
   def should_index?({_key, _val}) do false end
 end
-
-

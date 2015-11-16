@@ -1,5 +1,5 @@
-%{"chronos": {:hex, :chronos, "1.0.0"},
+%{"chronos": {:hex, :chronos, "1.5.1"},
   "eredis": {:hex, :eredis, "1.0.8"},
-  "exredis": {:hex, :exredis, "0.1.3"},
+  "exredis": {:hex, :exredis, "0.2.2"},
   "inch_ex": {:hex, :inch_ex, "0.3.1"},
-  "poison": {:hex, :poison, "1.4.0"}}
+  "poison": {:hex, :poison, "1.5.0"}}

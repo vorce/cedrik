@@ -40,30 +40,25 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
   ]
   end
 
-  defmacro __using__(_) do
-    quote location: :keep do
-      def setup_corpus() do
-        AgentIndex.start_link()
-        AgentStore.start_link()
-        TestUtils.test_corpus()
-          |> Enum.each(fn(doc) ->
-              Indexer.index_doc_raw(doc, "test-index", AgentIndex)
-              #Indexer.index_doc_raw(doc, "test-index", RedisIndex)
-            end)
-        :ok
-      end
+  def setup_corpus() do
+    AgentIndex.start_link()
+    AgentStore.start_link()
+    TestUtils.test_corpus()
+    |> Enum.each(fn(doc) ->
+      Indexer.index_doc_raw(doc, "test-index", AgentIndex)
+    end)
+    :ok
+  end
 
-      def ids(hits) do
-        hits
-          |> Enum.map(fn({id, _}) -> id end)
-      end
+  def ids(hits) do
+   hits
+   |> Enum.map(fn({id, _}) -> id end)
+  end
 
-      def locations(hits) do
-        hits
-          |> Enum.flat_map(fn{_, locs} -> Set.to_list(locs) end)
-          |> Enum.map(fn(l) -> l.field end)
-          |> Enum.uniq
-      end
-    end
+  def locations(hits) do
+   hits
+   |> Enum.flat_map(fn{_, locs} -> Set.to_list(locs) end)
+   |> Enum.map(fn(l) -> l.field end)
+   |> Enum.uniq
   end
 end

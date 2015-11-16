@@ -4,11 +4,10 @@ defmodule RedisIndex do
   """
   @behaviour Indexer
 
-  use Exredis
+  import Exredis
 
   defp redis() do
-    Application.get_all_env(:redis)[:connection_string]
-      |> start_using_connection_string()
+    start_link()
   end
 
   def id(thing) do
@@ -17,20 +16,20 @@ defmodule RedisIndex do
 
   def indices() do
     redis()
-      |>  query(["SMEMBERS", ".indices"])
+    |> query(["SMEMBERS", ".indices"])
   end
 
   def document_ids(index) do
     redis()
-      |> query(["SMEMBERS", index <> ".document_ids"])
-      |> Enum.into(HashSet.new)
-      # |> Stream.map(fn(id) -> id end)
+    |> query(["SMEMBERS", index <> ".document_ids"])
+    |> Enum.into(HashSet.new)
+    # |> Stream.map(fn(id) -> id end)
   end
 
   def terms(index) do
     redis()
-      |> query(["SMEMBERS", index <> ".terms"])
-      |> Stream.map(fn(t) -> t end)
+    |> query(["SMEMBERS", index <> ".terms"])
+    |> Stream.map(fn(t) -> t end)
   end
 
   @doc """
@@ -39,10 +38,10 @@ defmodule RedisIndex do
   """
   def term_positions(term, index) do
     redis()
-      |> query(["SMEMBERS", index <> "_" <> term])
-      |> Stream.map(&Poison.decode!(&1)) # [%{"3" => [%{"field" => "title", "position" => 0}]}]
-      |> Stream.map(&to_structure(&1))
-      |> Enum.reduce(%{}, &merge_term_positions(&1, &2))
+    |> query(["SMEMBERS", index <> "_" <> term])
+    |> Stream.map(&Poison.decode!(&1)) # [%{"3" => [%{"field" => "title", "position" => 0}]}]
+    |> Stream.map(&to_structure(&1))
+    |> Enum.reduce(%{}, &merge_term_positions(&1, &2))
   end
 
   # input: %{"3" => [%{"field" => "title", "position" => 0}]}
@@ -57,19 +56,19 @@ defmodule RedisIndex do
   # output: HashSet<%Location{:field => :title, :position => 0}>
   def to_locations(raw) do
     raw
-      |> Enum.map(fn(locs) ->
-        Map.put(%{}, :field, Map.get(locs, "field") |> String.to_atom)
-          |> Map.put(:position, Map.get(locs, "position"))
-      end)
-      |> Enum.map(&struct(Location, &1))
-      |> Enum.into(HashSet.new)
+    |> Enum.map(fn(locs) ->
+      Map.put(%{}, :field, Map.get(locs, "field") |> String.to_atom)
+        |> Map.put(:position, Map.get(locs, "position"))
+    end)
+    |> Enum.map(&struct(Location, &1))
+    |> Enum.into(HashSet.new)
   end
 
   def merge_term_positions(tp1, tp2) do
     Map.merge(tp1, tp2,
       fn(_k, p1, p2) ->
         Enum.concat(p1, p2)
-          |> Enum.into(HashSet.new)
+        |> Enum.into(HashSet.new)
       end)
   end
 
@@ -79,7 +78,7 @@ defmodule RedisIndex do
   def index(doc, index) do
     id = id(doc)
     term_map = Indexer.field_locations(id, doc)
-      |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
+    |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
 
     result = index_raw(index, term_map, id)
     case result |> List.keymember?(:error, 0) do # TODO: Verify that :error is actually returned from redis
@@ -90,22 +89,22 @@ defmodule RedisIndex do
 
   defp index_raw(index, term_map, docid) do
     queries = term_map
-      |> Map.keys
-      |> Stream.map(fn(t) ->
-          {t, merge_term_positions(Map.get(term_map, t),
-            term_positions(t, index))}
-        end)
-      |> Stream.flat_map(fn({t, locs}) ->
-          tl = for {id, loc} <- locs, do:
-            ["SADD", index <> "_" <> t, Poison.encode!(Map.put(%{}, id, loc))]
-          tl
-            |> Enum.concat([["SADD", index <> ".terms", t]])
-        end)
-      |> Stream.concat([["SADD", index <> ".document_ids", docid]])
-      |> Stream.concat([["SADD", ".indices", index]])
+    |> Map.keys
+    |> Stream.map(fn(t) ->
+        {t, merge_term_positions(Map.get(term_map, t),
+          term_positions(t, index))}
+      end)
+    |> Stream.flat_map(fn({t, locs}) ->
+        tl = for {id, loc} <- locs, do:
+          ["SADD", index <> "_" <> t, Poison.encode!(Map.put(%{}, id, loc))]
+        tl
+        |> Enum.concat([["SADD", index <> ".terms", t]])
+      end)
+    |> Stream.concat([["SADD", index <> ".document_ids", docid]])
+    |> Stream.concat([["SADD", ".indices", index]])
 
-      redis() |>
-        query_pipe(queries |> Enum.to_list)
+    redis() |>
+      query_pipe(queries |> Enum.to_list)
   end
 
   # TODO: Will need this for deleting all terms of
@@ -148,13 +147,12 @@ defmodule RedisIndex do
   """
   def delete(index) do
     queries = terms(index)
-      |> Stream.map(fn(t) -> ["DEL", index <> "_" <> t] end) # delete all keys in <index>.terms
-      |> Stream.concat([["SREM", ".indices", index]]) # delete index from .indices
-      |> Stream.concat([["DEL", index <> ".terms"]]) # delete index term
-      |> Stream.concat([["DEL", index <> ".document_ids"]]) # and document ids
+    |> Stream.map(fn(t) -> ["DEL", index <> "_" <> t] end) # delete all keys in <index>.terms
+    |> Stream.concat([["SREM", ".indices", index]]) # delete index from .indices
+    |> Stream.concat([["DEL", index <> ".terms"]]) # delete index term
+    |> Stream.concat([["DEL", index <> ".document_ids"]]) # and document ids
 
     redis()
-      |> query_pipe(queries |> Enum.to_list)
+    |> query_pipe(queries |> Enum.to_list)
   end
 end
-

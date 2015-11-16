@@ -1,6 +1,6 @@
 defmodule AgentIndexTest do
   use ExUnit.Case #, async: true
-  use TestUtils
+  alias TestUtils
 
   setup_all do
     AgentIndex.start_link()
@@ -29,7 +29,7 @@ defmodule AgentIndexTest do
       "_field4" => "not searchable field4",
       :field5 => -1,
       :field6 => {"not", "searchable", "field6"}}
-    
+
     :ok = AgentIndex.index(my_doc, index)
 
     assert Set.member?(AgentIndex.document_ids(index), Store.id(my_doc))
