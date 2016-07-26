@@ -1,11 +1,9 @@
 language: elixir
 elixir:
-  - 1.0.2
-otp_release:
-  - 17.4
+  - 1.2
 sudo: false
 script:
-  - mix test
+  - mix test --exclude external
 after_script:
   - MIX_ENV=docs mix deps.get
   - MIX_ENV=docs mix inch.report
