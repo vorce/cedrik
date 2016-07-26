@@ -4,7 +4,7 @@ defmodule Cedrik.Mixfile do
   def project do
     [app: :cedrik,
      version: "0.0.1",
-     elixir: "~> 1.0",
+     elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -28,11 +28,10 @@ defmodule Cedrik.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:chronos, "~> 1.5"},
-     #{:kvs, github: "synrc/kvs"},
-     {:exredis, "~> 0.2.2"},
-     {:poison, "~> 1.5"},
-     {:inch_ex, only: :docs},
-    ]
+    [{:chronos, "~> 1.7"},
+     {:exredis, "~> 0.2.5"},
+     {:poison, "~> 2.2"},
+     {:inch_ex, "~> 0.5", only: [:dev, :test]}
+   ]
   end
 end

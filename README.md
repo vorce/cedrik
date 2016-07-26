@@ -12,8 +12,8 @@ A for-fun project of writing a small, naive search engine suitable for Small Dat
     - ☑ MatchAll
     - ☑ Term (☐ boosting)
     - ☑ Boolean (And, Or, Not)
-    - ☐ Near 
-    - ☐ Wildcard (Only single leading or single trailing supported now)
+    - ☐ Near
+    - ☑ Wildcard (Only single leading or single trailing is supported)
 - ☐ Ranking
 - ☐ Highlights
 - ☐ Distributed indices (mnesia?, KVS?, riak?, redis?)
@@ -23,13 +23,14 @@ A for-fun project of writing a small, naive search engine suitable for Small Dat
 
 ### Tests
 
+Run unit tests:
+
+    mix test --exclude external
+
+Run all tests, including ones relying on external services. Such as the `RedisIndex` tests:
+
     mix test
 
-Will run all unit and in-memory tests.
-
-    mix test --include external:true
-
-Will also run tests which rely on external services. Such as the `RedisIndex` tests,
 **make sure you have the correct connection_string for redis in config/config.exs**.
 You can use `docker-compose` to get a redis instance up and running quickly.
 
@@ -42,7 +43,7 @@ a way to retrieve the original content in a straigh-forward manner.
 
 #### Indexing
 
-Indexing on the other hand is the term used in Cedrik for actually constructing an
+Indexing on the other hand is the term used in Cedrik (and all other search engines) for actually constructing an
 inverted index suitable for free text queries.
 
 ##### Note that the following section is going to change very soon
@@ -109,4 +110,3 @@ sorted by the stuff with most hits first.
 #### Fields
 
 #### Ranking
-

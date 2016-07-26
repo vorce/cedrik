@@ -21,7 +21,7 @@ config :cedrik,
 # Only needs to be specified when using the RedisIndex backend
 # and when running the external tests.
 config :exredis,
-  host: "docker",
+  host: "docker.local",
   port: 6379
 
 # It is also possible to import configuration files, relative to this

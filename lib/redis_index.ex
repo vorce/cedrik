@@ -8,6 +8,7 @@ defmodule RedisIndex do
 
   defp redis() do
     start_link()
+    |> elem(1)
   end
 
   def id(thing) do

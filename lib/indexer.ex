@@ -79,7 +79,7 @@ defmodule Indexer do
 
   def field_locations(id, doc) when is_map(doc) do
     doc
-    |> Map.to_list() 
+    |> Map.to_list()
     |> Enum.filter(&should_index?(&1))
     |> Enum.flat_map(fn({k, v}) ->
       term_locations(id, tokenize(v), k) end)

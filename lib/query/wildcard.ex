@@ -22,7 +22,7 @@ defmodule Query.Wildcard do
     def ending_wildcard(query, indices) do
       hits = indices
         |> Enum.flat_map(&leading_terms(&1, query))
-      %Result{hits: hits} 
+      %Result{hits: hits}
     end
 
     def ending_terms(index, query) do
@@ -38,7 +38,7 @@ defmodule Query.Wildcard do
       AgentIndex.terms(index)
         |> Stream.filter(&filter_fn.(&1, no_wc))
         |> Stream.map(&AgentIndex.term_positions(&1, index))
-        |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
+        |> Enum.reduce(%{}, &Indexer.merge_term_locations(&1, &2))
         |> Query.Term.remove_irrelevant(query.fields)
     end
   end

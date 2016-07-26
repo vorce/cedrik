@@ -4,10 +4,6 @@ defmodule RedisIndexTest do
 
   @moduletag :external
 
-  # Exclude all external tests from running.
-  # TODO move to somewhere more suitable
-  ExUnit.configure(exclude: [external: true])
-
   setup_all do
     Application.put_env(:index, :backend, RedisIndex) # TODO fix so we can enable async
     :ok

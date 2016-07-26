@@ -1,5 +1,5 @@
-%{"chronos": {:hex, :chronos, "1.5.1"},
-  "eredis": {:hex, :eredis, "1.0.8"},
-  "exredis": {:hex, :exredis, "0.2.2"},
-  "inch_ex": {:hex, :inch_ex, "0.3.1"},
-  "poison": {:hex, :poison, "1.5.0"}}
+%{"chronos": {:hex, :chronos, "1.7.0", "aee907f6bcc11a566cfbaf8b5850799e6cf7e8d651013fbbcd653b98a70c112d", [:mix], []},
+  "eredis": {:hex, :eredis, "1.0.8", "ab4fda1c4ba7fbe6c19c26c249dc13da916d762502c4b4fa2df401a8d51c5364", [:rebar], []},
+  "exredis": {:hex, :exredis, "0.2.5", "34d02fa9ef32174cbd790b166746f91b3dbc131ce37a2d9a2451e8bba164b423", [:mix], [{:eredis, ">= 1.0.8", [hex: :eredis, optional: false]}]},
+  "inch_ex": {:hex, :inch_ex, "0.5.3", "39f11e96181ab7edc9c508a836b33b5d9a8ec0859f56886852db3d5708889ae7", [:mix], [{:poison, "~> 1.5 or ~> 2.0", [hex: :poison, optional: false]}]},
+  "poison": {:hex, :poison, "2.2.0", "4763b69a8a77bd77d26f477d196428b741261a761257ff1cf92753a0d4d24a63", [:mix], []}}
