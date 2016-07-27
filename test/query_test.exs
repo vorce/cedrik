@@ -134,15 +134,16 @@ defmodule QueryTest do
 
     assert r.hits == []
   end
-  # test "boolean with wildcards" do
-  #   wild_pre = %Query.Wildcard{value: "*fabrik"}
-  #   wild_post = %Query.Wildcard{value: "fabrik*"}
-  #   bool_query = %Query.Boolean{optional: [wild_pre, wild_post]}
-  #
-  #   r = Search.search(bool_query, ["test-index"])
-  #
-  #   assert r.hits |> T.ids |> Enum.sort == []
-  # end
+
+  test "boolean with wildcards" do
+    wild_pre = %Query.Wildcard{value: "*virus"}
+    wild_post = %Query.Wildcard{value: "calici*"}
+    bool_query = %Query.Boolean{optional: [wild_pre, wild_post]}
+
+    r = Search.search(bool_query, ["test-index"])
+
+    assert r.hits |> T.ids |> Enum.sort == ["2"]
+  end
 
   test "ids with more hits before ids with less hits" do
     r = Search.search(%Query.Term{value: "en"}, ["test-index"])
