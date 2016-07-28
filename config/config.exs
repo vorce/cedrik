@@ -15,8 +15,11 @@ use Mix.Config
 #       format: "$date $time [$level] $metadata$message\n",
 #       metadata: [:user_id]
 
-config :cedrik,
-  backend: AgentIndex # Valid backends MUST use the Indexer behaviour.
+
+config :cedrik, IndexSupervisor,
+  indices: %{:testindex0 => AgentIndex,
+             :testindex1 => AgentIndex}
+
 
 # Only needs to be specified when using the RedisIndex backend
 # and when running the external tests.

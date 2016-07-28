@@ -17,6 +17,7 @@ A for-fun project of writing a small, naive search engine suitable for Small Dat
 - ☐ Ranking
 - ☐ Highlights
 - ☐ Distributed indices (mnesia?, KVS?, riak?, redis?)
+- ☑ Persistance (supported indirectly by using redis backed indices, but I would also like to add some simple compressed varitant for AgentIndex)
 - ☐ Demo web UI (phoenix!)
 
 ## Usage
@@ -34,32 +35,20 @@ Run all tests, including ones relying on external services. Such as the `RedisIn
 **make sure you have the correct connection_string for redis in config/config.exs**.
 You can use `docker-compose` to get a redis instance up and running quickly.
 
-### Storing and Indexing
+### Indexing
 
-#### Storing
+Each index in Cedrik is represented by a process with the `Index` `@behaviour`.
+To index something into an index simply call `Index.index_doc(something, :index_name, type)` where
+`something` would be an Elixir map or struct (I would recommend creating a struct, with an id field, that implements the `Store` protocol),
+`type` must be one of the existing index implementations `AgentIndex` or `RedisIndex`.
 
-This is not necessarily related to searching. Storing something in Cedrik is just
-a way to retrieve the original content in a straigh-forward manner.
+#### AgentIndex
 
-#### Indexing
+This is the naive in-memory index type, suitable for stuff that fits in memory and that does not need to be persisted.
 
-Indexing on the other hand is the term used in Cedrik (and all other search engines) for actually constructing an
-inverted index suitable for free text queries.
+#### RedisIndex
 
-##### Note that the following section is going to change very soon
-
-Cedrik can take any Elixir map and index its contents for searching.
-I would recommend creating a struct, with an id field, that
-implements the Store protocol. Look at the example implementation
-for Map and Document in `indexer.ex`.
-Make sure your struct `@derive [Access, Enumerable]`!
-`Indexer.index_doc/3` will skip indexing of any fields starting with underscore.
-
-After your elixir data structure is indexed, where can you get it?
-From the Store! Just do `AgentStore.get/1`
-
-For examples, check out `test/indexing_test.exs`,
-`lib/document.ex` and `indexer.ex`
+This is an index backed by redis. You must have a redis instance up and running for this to work. The main benefit of using a RedisIndex compared to AgentIndex is when you want to be able to persist data.
 
 #### Tokenizing
 
@@ -67,17 +56,11 @@ For now a token is simply any string separated by spaces.
 
 ### Querying
 
-You can at any time access raw indices via `AgentIndex.get/1`, but
-that is not very useful. Luckily Cedrik provides some shortcuts to
-querying its indices.
+Use `Search.search(query_struct, [:index1, :index2])`, see `test/e2e_test.exs` and `test/query_test.exs` for examples.
 
 #### MatchAll
 
 This query will return all document ids in the specified indices.
-
-TODO:
-If you specify an empty list of indices, all documents in all indices
-will be hits.
 
 #### Term
 

@@ -2,34 +2,94 @@ defmodule RedisIndex do
   @moduledoc """
   Redis as a backend for cedrik indices
   """
-  @behaviour Indexer
+  use GenServer
 
-  import Exredis
+  @behaviour Index
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, opts)
+  end
+
+  def init(opts) do
+    {:ok, %CedrikIndex{name: Keyword.get(opts, :name), type: :redis}}
+  end
+
+  def index(thing, index) do
+    GenServer.call(index, {:index, thing})
+  end
+
+  def clear(index) do
+    GenServer.call(index, :clear)
+  end
+
+  def delete_doc(docid, index) do
+    GenServer.call(index, {:delete_doc, docid})
+  end
+
+  def terms(index) do
+    GenServer.call(index, :terms)
+  end
+
+  def term_positions(term, index) do
+    GenServer.call(index, {:term_positions, term})
+  end
+
+  def document_ids(index) do
+    GenServer.call(index, :document_ids)
+  end
+
+  def get(index) do
+    GenServer.call(index, :get)
+  end
 
   defp redis() do
-    start_link()
+    Exredis.start_link()
     |> elem(1)
   end
 
-  def id(thing) do
-    Store.id(thing)
+  def handle_call({:index, data}, _from, state) do
+    {:reply, _index(data, state.name), state}
+  end
+
+  def handle_call(:terms, _from, state) do
+    {:reply, _terms(state.name), state}
+  end
+
+  def handle_call(:document_ids, _from, state) do
+    {:reply, _document_ids(state.name), state}
+  end
+
+  def handle_call(:clear, _from, state) do
+    {:reply, _clear(state.name), state}
+  end
+
+  def handle_call({:term_positions, term}, _from, state) do
+    {:reply, _term_positions(term, state.name), state}
+  end
+
+  def handle_call({:delete_doc, docid}, _from, state) do
+    {:reply, _delete_doc(docid, state.name), state}
+  end
+
+  def handle_call(:get, _from, state) do
+    {:reply, state, state}
   end
 
   def indices() do
     redis()
-    |> query(["SMEMBERS", ".indices"])
+    |> Exredis.query(["SMEMBERS", ".indices"])
   end
 
-  def document_ids(index) do
+  def _document_ids(index) do
     redis()
-    |> query(["SMEMBERS", index <> ".document_ids"])
+    |> Exredis.query(["SMEMBERS", "#{index}.document_ids"])
     |> Enum.into(HashSet.new)
     # |> Stream.map(fn(id) -> id end)
   end
 
-  def terms(index) do
+  def _terms(index) do
     redis()
-    |> query(["SMEMBERS", index <> ".terms"])
+    |> Exredis.query(["SMEMBERS", "#{index}.terms"])
     |> Stream.map(fn(t) -> t end)
   end
 
@@ -37,9 +97,9 @@ defmodule RedisIndex do
   Returns a map of positions for each document where the term exist. Ex:
   %{"docId123" => [pos1, pos2], "docIdN" => [pos1]}
   """
-  def term_positions(term, index) do
+  def _term_positions(term, index) do
     redis()
-    |> query(["SMEMBERS", index <> "_" <> term])
+    |> Exredis.query(["SMEMBERS", "#{index}_#{term}"])
     |> Stream.map(&Poison.decode!(&1)) # [%{"3" => [%{"field" => "title", "position" => 0}]}]
     |> Stream.map(&to_structure(&1))
     |> Enum.reduce(%{}, &merge_term_positions(&1, &2))
@@ -76,10 +136,10 @@ defmodule RedisIndex do
   @doc """
   Index a document in redis
   """
-  def index(doc, index) do
-    id = id(doc)
-    term_map = Indexer.field_locations(id, doc)
-    |> Enum.reduce(&Indexer.merge_term_locations(&1, &2))
+  def _index(doc, index) do
+    id = Store.id(doc)
+    term_map = Index.field_locations(id, doc)
+    |> Enum.reduce(&Index.merge_term_locations(&1, &2))
 
     result = index_raw(index, term_map, id)
     case result |> List.keymember?(:error, 0) do # TODO: Verify that :error is actually returned from redis
@@ -93,19 +153,19 @@ defmodule RedisIndex do
     |> Map.keys
     |> Stream.map(fn(t) ->
         {t, merge_term_positions(Map.get(term_map, t),
-          term_positions(t, index))}
+          _term_positions(t, index))}
       end)
     |> Stream.flat_map(fn({t, locs}) ->
         tl = for {id, loc} <- locs, do:
-          ["SADD", index <> "_" <> t, Poison.encode!(Map.put(%{}, id, loc))]
+          ["SADD", "#{index}_#{t}", Poison.encode!(Map.put(%{}, id, loc))]
         tl
-        |> Enum.concat([["SADD", index <> ".terms", t]])
+        |> Enum.concat([["SADD", "#{index}.terms", t]])
       end)
-    |> Stream.concat([["SADD", index <> ".document_ids", docid]])
+    |> Stream.concat([["SADD", "#{index}.document_ids", docid]])
     |> Stream.concat([["SADD", ".indices", index]])
 
-    redis() |>
-      query_pipe(queries |> Enum.to_list)
+    redis()
+    |> Exredis.query_pipe(queries |> Enum.to_list)
   end
 
   # TODO: Will need this for deleting all terms of
@@ -114,46 +174,46 @@ defmodule RedisIndex do
   def delete_old_terms(terms, docid, index) do
     client = redis()
     queries = terms
-      |> Stream.map(fn(t) -> {t, client |> query(["SMEMBERS", index <> "_" <> t])} end)
+      |> Stream.map(fn(t) -> {t, client |> Exredis.query(["SMEMBERS", "#{index}_#{t}"])} end)
       |> Stream.reject(fn({_t, locs}) -> locs == [] end)
       |> Stream.map(fn({t, locs}) -> {t, Poison.decode!(locs)} end)
       |> Stream.filter(fn({_t, m}) -> Map.keys(m) |> hd == docid end)
-      |> Stream.map(fn({t, m}) -> ["SREM", index <> "_" <> t, Poison.encode!(m)] end)
+      |> Stream.map(fn({t, m}) -> ["SREM", "#{index}_#{t}", Poison.encode!(m)] end)
 
       client
-        |> query_pipe(queries |> Enum.to_list)
+        |> Exredis.query_pipe(queries |> Enum.to_list)
   end
 
   @doc """
   Deletes the doc (its terms and document id)
   """
-  def delete_doc(did, index) do
+  def _delete_doc(did, index) do
     IO.puts("Deleting document #{did} from index #{index}")
 
-    queries = terms(index)
-      |> Stream.map(fn(t) -> {t, term_positions(t, index)} end)
+    queries = _terms(index)
+      |> Stream.map(fn(t) -> {t, _term_positions(t, index)} end)
       |> Stream.filter(fn({_term, pos}) -> Map.has_key?(pos, did) end)
       |> Stream.map(fn({t, pos}) -> {t, Map.put(%{}, did, Map.get(pos, did))} end)
       |> Stream.map(fn({term, pos}) ->
-          ["SREM", index <> "_" <> term, Poison.encode!(pos)]
+          ["SREM", "#{index}_#{term}", Poison.encode!(pos)]
         end)
-      |> Stream.concat([["SREM", index <> ".document_ids", did]])
+      |> Stream.concat([["SREM", "#{index}.document_ids", did]])
 
     redis()
-      |> query_pipe(queries |> Enum.to_list)
+      |> Exredis.query_pipe(queries |> Enum.to_list)
   end
 
   @doc """
   Deletes the index
   """
-  def delete(index) do
-    queries = terms(index)
-    |> Stream.map(fn(t) -> ["DEL", index <> "_" <> t] end) # delete all keys in <index>.terms
-    |> Stream.concat([["SREM", ".indices", index]]) # delete index from .indices
-    |> Stream.concat([["DEL", index <> ".terms"]]) # delete index term
-    |> Stream.concat([["DEL", index <> ".document_ids"]]) # and document ids
+  def _clear(index) do
+    queries = _terms(index)
+    |> Stream.map(fn(t) -> ["DEL", "#{index}_#{t}"] end) # delete all keys in <index>.terms
+    #|> Stream.concat([["SREM", ".indices", index]]) # delete index from .indices
+    |> Stream.concat([["DEL", "#{index}.terms"]]) # delete index terms
+    |> Stream.concat([["DEL", "#{index}.document_ids"]]) # and document ids
 
     redis()
-    |> query_pipe(queries |> Enum.to_list)
+    |> Exredis.query_pipe(queries |> Enum.to_list)
   end
 end

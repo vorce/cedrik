@@ -47,8 +47,8 @@ defmodule Query.Boolean do
       {excl, incl} = Task.await(both)
 
       filtered = incl.hits
-        |> Stream.filter(fn({i, _l}) ->
-          not Enum.member?(ids(excl.hits), i) end)
+        |> Stream.reject(fn({i, _l}) ->
+          Enum.member?(ids(excl.hits), i) end)
 
       %Result{hits: Enum.to_list(filtered)}
     end

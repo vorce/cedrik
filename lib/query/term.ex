@@ -5,15 +5,17 @@ defmodule Query.Term do
   defimpl Search, for: Query.Term do
     def search(query, indices) do
       IO.puts("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
+
       hits = indices
+        |> IndexSupervisor.index_pids()
         |> Stream.flat_map(&term_in(&1, query))
         |> Enum.to_list
         |> Enum.sort(&Query.Term.hit_frequency/2)
       %Result{ hits: hits }
     end
 
-    def term_in(index, query) do
-      Application.get_all_env(:index)[:backend].term_positions(query.value, index)
+    def term_in({pid, module}, query) do
+      module.term_positions(query.value, pid)
         |> Query.Term.remove_irrelevant(query.fields)
     end
 
@@ -44,4 +46,3 @@ defmodule Query.Term do
     Set.size(ls1) > Set.size(ls2)
   end
 end
-
