@@ -1,30 +1,27 @@
-defmodule Indexer do
+defmodule Index do
   @doc "Index `thing` into the destination `index`"
-  @callback index(thing :: any, index :: String.t) :: Atom.t
+  @callback index(thing :: any, index :: Atom.t) :: Atom.t
 
-  @doc "Uniquely identify the `thing`, must return a string"
-  @callback id(thing :: any) :: String.t
-
-  @doc "Delete `index` and its contents"
-  @callback delete(index :: String.t) :: Atom.t
+  @doc "Clear `index` and its contents"
+  @callback clear(index :: Atom.t) :: Atom.t
 
   @doc "Delete a document with `docid` from `index`"
-  @callback delete_doc(docid :: String.t, index :: String.t) :: Atom.t
-
-  @doc "Returns all known indices"
-  @callback indices() :: List.t
+  @callback delete_doc(docid :: String.t, index :: Atom.t) :: Atom.t
 
   @doc "Returns all terms known for `index`"
-  @callback terms(index :: String.t) :: Stream.t
+  @callback terms(index :: Atom.t) :: Stream.t
 
   @doc """
   Returns a map of positions for each document where the term exist. Ex:
   %{"docId123" => [pos1, pos2], "docIdN" => [pos1]}
   """
-  @callback term_positions(term :: String.t, index :: String.t) :: Map.t
+  @callback term_positions(term :: String.t, index :: Atom.t) :: Map.t
 
   @doc "Returns all known document ids for `index`"
-  @callback document_ids(index :: String.t) :: List.t
+  @callback document_ids(index :: Atom.t) :: List.t
+
+  @doc "Returns raw underlying CedrikIndex struct"
+  @callback get(index :: Atom.t) :: Map.t
 
   def tokenize(text) do
     re = ~r/\W/iu # Match all non-words
@@ -37,15 +34,23 @@ defmodule Indexer do
       |> Enum.member?(id)
   end
 
-  def index_doc(doc, index, type) do
-    case indexed?(type.id(doc), index, type) do
-      true -> IO.puts("Document #{type.id(doc)} already present in #{index} (type: #{type})")
+  def index_doc(doc, index, type \\ AgentIndex) do
+    pid = case IndexSupervisor.pid_by_name(index) do
+      {:error, _} ->
+        {:ok, pid} = Supervisor.start_child(IndexSupervisor,
+          Supervisor.Spec.worker(type, [[name: index]], id: index))
+        pid
+      {p, _m} -> p
+    end
+
+    case indexed?(Store.id(doc), pid, type) do
+      true -> IO.puts("Document #{Store.id(doc)} already present in #{index} (type: #{type})")
       false -> index_doc_raw(doc, index, type)
     end
   end
 
-  def index_doc_raw(doc, index, type) do
-    IO.puts("Indexing document with id #{type.id(doc)} into #{index} (type: #{type})")
+  defp index_doc_raw(doc, index, type) do
+    IO.puts("Indexing document with id #{Store.id(doc)} into #{inspect index} (type: #{type})")
     #terms = field_locations(id, doc)
     #  |> Enum.reduce(&merge_term_locations(&1, &2))
 

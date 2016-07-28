@@ -38,7 +38,7 @@ defmodule Query.Wildcard do
       AgentIndex.terms(index)
         |> Stream.filter(&filter_fn.(&1, no_wc))
         |> Stream.map(&AgentIndex.term_positions(&1, index))
-        |> Enum.reduce(%{}, &Indexer.merge_term_locations(&1, &2))
+        |> Enum.reduce(%{}, &Index.merge_term_locations(&1, &2))
         |> Query.Term.remove_irrelevant(query.fields)
     end
   end

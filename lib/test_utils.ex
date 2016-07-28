@@ -40,14 +40,15 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
   ]
   end
 
-  def setup_corpus() do
-    AgentIndex.start_link()
-    AgentStore.start_link()
-    TestUtils.test_corpus()
+  def setup_corpus(name) do
+    {:ok, pid} = Supervisor.start_child(IndexSupervisor,
+      Supervisor.Spec.worker(AgentIndex, [[name: name]], id: name))
+
+    test_corpus()
     |> Enum.each(fn(doc) ->
-      Indexer.index_doc_raw(doc, "test-index", AgentIndex)
+      AgentIndex.index(doc, pid)
     end)
-    :ok
+    {:ok, pid}
   end
 
   def ids(hits) do
