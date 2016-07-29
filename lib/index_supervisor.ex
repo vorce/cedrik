@@ -1,4 +1,8 @@
 defmodule IndexSupervisor do
+  @moduledoc """
+  Supervises all indices in Cedrik. Also handles listing of them.
+  """
+
   use Supervisor
 
   def start_link do
@@ -16,21 +20,24 @@ defmodule IndexSupervisor do
     supervise(workers, opts)
   end
 
-  def index_pids() do
+  @doc "Lists all existing indices in Cedrik. Returns a list of tuples that look like: {pid, name, module}"
+  def list() do
     Supervisor.which_children(__MODULE__)
     |> Enum.filter(fn({_id, _child, type, _modules}) -> type == :worker end)
-    |> Enum.map(fn({_id, pid, _type, modules}) -> {pid, hd(modules)} end)
+    |> Enum.map(fn({_id, pid, _type, modules}) -> {pid, hd(modules).get(pid).name, hd(modules)} end)
   end
 
-  def index_pids(indices) when is_list(indices) do
+  @doc "Lists all indices matching the list of given index names. Returns a list of tuples on the same format as Index.list/0"
+  def list(indices) when is_list(indices) do
     Supervisor.which_children(__MODULE__)
     |> Enum.filter(fn({_id, _child, type, _modules}) -> type == :worker end)
     |> Enum.map(fn({_id, pid, _type, modules}) -> {modules, pid} end)
-    |> Enum.filter(fn({modules, pid}) -> Enum.member?(indices, hd(modules).get(pid).name) end)
-    |> Enum.map(fn({modules, pid}) -> {pid, hd(modules)} end)
+    |> Enum.map(fn({modules, pid}) -> {pid, hd(modules).get(pid).name, hd(modules)} end)
+    |> Enum.filter(fn({_pid, name, _module}) -> Enum.member?(indices, name) end)
   end
 
-  def pid_by_name(index_name) do
+  @doc "Gives back details about the given index_name if it exsits: {pid, module}"
+  def by_name(index_name) do
      matches = Supervisor.which_children(__MODULE__)
      |> Enum.filter(fn({_id, _child, type, _modules}) -> type == :worker end)
      |> Enum.map(fn({_id, pid, _type, modules}) -> {modules, pid} end)

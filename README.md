@@ -17,7 +17,7 @@ A for-fun project of writing a small, naive search engine suitable for Small Dat
 - ☐ Ranking
 - ☐ Highlights
 - ☐ Distributed indices (mnesia?, KVS?, riak?, redis?)
-- ☑ Persistance (supported indirectly by using redis backed indices, but I would also like to add some simple compressed varitant for AgentIndex)
+- ☐ Persistance (supported indirectly by using redis backed indices, but I would also like to add some simple compressed varitant for AgentIndex)
 - ☐ Demo web UI (phoenix!)
 
 ## Usage
@@ -40,7 +40,9 @@ You can use `docker-compose` to get a redis instance up and running quickly.
 Each index in Cedrik is represented by a process with the `Index` `@behaviour`.
 To index something into an index simply call `Index.index_doc(something, :index_name, type)` where
 `something` would be an Elixir map or struct (I would recommend creating a struct, with an id field, that implements the `Store` protocol),
-`type` must be one of the existing index implementations `AgentIndex` or `RedisIndex`.
+`type` must be one of the existing index implementations `AgentIndex` or `RedisIndex`. The last argument to `Index.index_doc` is optional and defaults to `AgentIndex`.
+
+To get a list of existing indices use `Index.list/0` or `Index.list/1` - these will return a list of tuples on the format `{pid, name, module}`
 
 #### AgentIndex
 

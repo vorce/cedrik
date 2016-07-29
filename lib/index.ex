@@ -34,8 +34,9 @@ defmodule Index do
       |> Enum.member?(id)
   end
 
+  @doc "Index a document (elixir map or structure) into index (pid or atom), type being either AgentIndex or RedisIndex."
   def index_doc(doc, index, type \\ AgentIndex) do
-    pid = case IndexSupervisor.pid_by_name(index) do
+    pid = case IndexSupervisor.by_name(index) do
       {:error, _} ->
         {:ok, pid} = Supervisor.start_child(IndexSupervisor,
           Supervisor.Spec.worker(type, [[name: index]], id: index))

@@ -6,15 +6,14 @@ defmodule Query.Term do
     def search(query, indices) do
       IO.puts("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
 
-      hits = indices
-        |> IndexSupervisor.index_pids()
+      hits = IndexSupervisor.list(indices)
         |> Stream.flat_map(&term_in(&1, query))
         |> Enum.to_list
         |> Enum.sort(&Query.Term.hit_frequency/2)
       %Result{ hits: hits }
     end
 
-    def term_in({pid, module}, query) do
+    def term_in({pid, _name, module}, query) do
       module.term_positions(query.value, pid)
         |> Query.Term.remove_irrelevant(query.fields)
     end
