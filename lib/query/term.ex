@@ -1,10 +1,12 @@
 defmodule Query.Term do
+  require Logger
+
   defstruct fields: [], value: nil
   @type t :: %Query.Term{fields: List.t, value: any}
 
   defimpl Search, for: Query.Term do
     def search(query, indices) do
-      IO.puts("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
+      Logger.debug("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
 
       hits = IndexSupervisor.list(indices)
         |> Stream.flat_map(&term_in(&1, query))

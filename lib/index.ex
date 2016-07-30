@@ -1,4 +1,6 @@
 defmodule Index do
+  require Logger
+
   @doc "Index `thing` into the destination `index`"
   @callback index(thing :: any, index :: Atom.t) :: Atom.t
 
@@ -38,6 +40,7 @@ defmodule Index do
   def index_doc(doc, index, type \\ AgentIndex) do
     pid = case IndexSupervisor.by_name(index) do
       {:error, _} ->
+        Logger.debug("The specified index (#{index}) does not exist, creating it...")
         {:ok, pid} = Supervisor.start_child(IndexSupervisor,
           Supervisor.Spec.worker(type, [[name: index]], id: index))
         pid
@@ -45,23 +48,14 @@ defmodule Index do
     end
 
     case indexed?(Store.id(doc), pid, type) do
-      true -> IO.puts("Document #{Store.id(doc)} already present in #{index} (type: #{type})")
+      true -> Logger.info("Document #{Store.id(doc)} already present in #{index} (type: #{type}), ignored")
       false -> index_doc_raw(doc, index, type)
     end
   end
 
   defp index_doc_raw(doc, index, type) do
-    IO.puts("Indexing document with id #{Store.id(doc)} into #{inspect index} (type: #{type})")
-    #terms = field_locations(id, doc)
-    #  |> Enum.reduce(&merge_term_locations(&1, &2))
-
+    Logger.info("Indexing document with id #{Store.id(doc)} into #{inspect index} (type: #{type})")
     type.index(doc, index)
-    #idx = AgentIndex.get(index)
-    #  |> update_in([:terms], fn(ts) -> merge_term_locations(ts, terms) end)
-    #  |> update_in([:document_ids], fn(ids) -> Set.put(ids, id) end)
-
-    # AgentStore.put(id, doc) # TODO move this?
-    #{AgentIndex.put(idx), idx}
   end
 
   def term_locations(id, terms, field) do

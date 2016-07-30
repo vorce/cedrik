@@ -3,6 +3,7 @@ defmodule AgentIndex do
   In-memory index
   """
   @behaviour Index
+  require Logger
 
   def index(doc, pid) do
     id = Store.id(doc)
@@ -66,7 +67,7 @@ defmodule AgentIndex do
   Deletes the terms and id of the doc in the index
   """
   def delete_doc(did, pid) do
-    IO.puts("Deleting document #{did} from index #{inspect pid}")
+    Logger.debug("Deleting document #{did} from index #{inspect pid}")
 
     doc_ids = document_ids(pid)
     |> Stream.reject(fn(x) -> x == did end)

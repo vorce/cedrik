@@ -3,6 +3,7 @@ defmodule RedisIndex do
   Redis as a backend for cedrik indices
   """
   use GenServer
+  require Logger
 
   @behaviour Index
 
@@ -188,7 +189,7 @@ defmodule RedisIndex do
   Deletes the doc (its terms and document id)
   """
   def _delete_doc(did, index) do
-    IO.puts("Deleting document #{did} from index #{index}")
+    Logger.debug("Deleting document #{did} from index #{index}")
 
     queries = _terms(index)
       |> Stream.map(fn(t) -> {t, _term_positions(t, index)} end)

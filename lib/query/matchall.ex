@@ -1,10 +1,12 @@
 defmodule Query.MatchAll do
+  require Logger
+
   defstruct []
   @type t :: %Query.MatchAll{}
 
   defimpl Search, for: Query.MatchAll do
     def search(_query, indices) do
-      IO.puts("Searching for all documents in #{inspect indices}")
+      Logger.debug("Searching for all documents in #{inspect indices}")
       hits = all_in(indices)
       %Result{ hits: Enum.to_list(hits) }
     end

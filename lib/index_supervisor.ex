@@ -1,6 +1,7 @@
 defmodule IndexSupervisor do
   @moduledoc """
-  Supervises all indices in Cedrik. Also handles listing of them.
+  Supervises all indices in Cedrik. Also handles listing and removing indices.
+  TODO: Clean up responsibilities between Index and IndexSupervisor modules.
   """
 
   use Supervisor
@@ -36,17 +37,24 @@ defmodule IndexSupervisor do
     |> Enum.filter(fn({_pid, name, _module}) -> Enum.member?(indices, name) end)
   end
 
-  @doc "Gives back details about the given index_name if it exsits: {pid, module}"
+  @doc "Gives back details about the given index_name if it exsits: {pid, name, module}"
   def by_name(index_name) do
      matches = Supervisor.which_children(__MODULE__)
      |> Enum.filter(fn({_id, _child, type, _modules}) -> type == :worker end)
      |> Enum.map(fn({_id, pid, _type, modules}) -> {modules, pid} end)
      |> Enum.filter(fn({modules, pid}) -> hd(modules).get(pid).name == index_name end)
-     |> Enum.map(fn({modules, pid}) -> {pid, hd(modules)} end)
+     |> Enum.map(fn({modules, pid}) -> {pid, index_name, hd(modules)} end)
 
      cond do
-        matches == [] -> {:error, "No such index: #{index_name}"}
+        matches == [] -> {:error, :not_found}
         true -> hd(matches)
      end
+  end
+
+  @doc "Remove an index from Cedrik"
+  def remove({pid, name, module}) do
+     module.clear(pid)
+     Supervisor.terminate_child(__MODULE__, name)
+     Supervisor.delete_child(__MODULE__, name)
   end
 end

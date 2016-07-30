@@ -19,4 +19,16 @@ defmodule E2eTest do
     assert length(result.hits) == 1
     assert result.hits |> TestUtils.ids |> Enum.sort == ["0"]
   end
+
+  test "remove index" do
+     doc1 = hd(TestUtils.test_corpus())
+     :ok = Index.index_doc(doc1, :my_agent_index2)
+     details = IndexSupervisor.by_name(:my_agent_index2)
+
+     assert IndexSupervisor.list |> Enum.member?(details) == true
+
+     :ok = IndexSupervisor.remove(details)
+
+     assert IndexSupervisor.list |> Enum.member?(details) == false
+  end
 end
