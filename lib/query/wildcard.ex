@@ -1,6 +1,6 @@
 defmodule Query.Wildcard do
-  defstruct fields: [], value: nil, type: :wildcard
-  @type t :: %Query.Wildcard{fields: List.t, value: any, type: Atom.t}
+  defstruct fields: [], value: nil
+  @type t :: %Query.Wildcard{fields: List.t, value: any}
 
   defimpl Search, for: Query.Wildcard do
     def search(query, indices) do
@@ -10,6 +10,7 @@ defmodule Query.Wildcard do
           ending_wildcard(query, indices)
         length(parts) == 2 && hd(parts) == "" ->
           leading_wildcard(query, indices)
+        true -> raise("No wildcard character ('*') passed to wildcard query")
       end
     end
 

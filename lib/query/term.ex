@@ -1,6 +1,6 @@
 defmodule Query.Term do
-  defstruct fields: [], value: nil, type: :term
-  @type t :: %Query.Term{fields: List.t, value: any, type: Atom.t}
+  defstruct fields: [], value: nil
+  @type t :: %Query.Term{fields: List.t, value: any}
 
   defimpl Search, for: Query.Term do
     def search(query, indices) do

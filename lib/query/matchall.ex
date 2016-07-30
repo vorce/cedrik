@@ -1,6 +1,6 @@
 defmodule Query.MatchAll do
-  defstruct type: :all
-  @type t :: %Query.MatchAll{type: Atom.t}
+  defstruct []
+  @type t :: %Query.MatchAll{}
 
   defimpl Search, for: Query.MatchAll do
     def search(_query, indices) do

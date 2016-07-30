@@ -1,10 +1,9 @@
 defmodule Query.Boolean do
-  defstruct must: [], optional: [], must_not: [], type: :boolean
+  defstruct must: [], optional: [], must_not: []
   @type t :: %Query.Boolean{
     must: List.t,
     optional: List.t,
     must_not: List.t,
-    type: Atom.t,
   }
 
   defimpl Search, for: Query.Boolean do
