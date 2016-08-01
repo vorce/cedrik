@@ -3,16 +3,14 @@ defmodule AgentStore do
   In-memory document storage
   """
 
-  defimpl Store, for: [Map, Document] do
+  defimpl Storable, for: [Map, Document] do
     def store(doc) do
-      #Indexer.index(id(map), map, index)
       AgentStore.put(id(doc), doc)
     end
 
-    # TODO: Use some actual UUID here instead of random
     def id(doc) do
       Map.get(doc, :id,
-        Map.get(doc, "id", :random.uniform * 1000000))
+        Map.get(doc, "id", :random.uniform * 1000000)) # TODO: Use some actual UUID here instead of random
       |> to_string
     end
 
@@ -50,4 +48,3 @@ defmodule AgentStore do
     Agent.update(__MODULE__, &Map.drop(&1, keys))
   end
 end
-

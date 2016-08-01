@@ -138,7 +138,7 @@ defmodule RedisIndex do
   Index a document in redis
   """
   def _index(doc, index) do
-    id = Store.id(doc)
+    id = Storable.id(doc)
     term_map = Index.field_locations(id, doc)
     |> Enum.reduce(&Index.merge_term_locations(&1, &2))
 

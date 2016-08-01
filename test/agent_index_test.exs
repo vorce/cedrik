@@ -13,7 +13,7 @@ defmodule AgentIndexTest do
     index = AgentIndex.get(pid)
 
     assert index.document_ids |> Set.size() == 1
-    assert Set.member?(index.document_ids, Store.id(doc))
+    assert Set.member?(index.document_ids, Storable.id(doc))
     assert Map.size(index.terms) > 0
   end
 
@@ -28,11 +28,11 @@ defmodule AgentIndexTest do
 
     :ok = AgentIndex.index(my_doc, pid)
 
-    assert Set.member?(AgentIndex.document_ids(pid), Store.id(my_doc))
+    assert Set.member?(AgentIndex.document_ids(pid), Storable.id(my_doc))
     assert AgentIndex.terms(pid) |> Enum.to_list |> Enum.sort ==
       ["field1", "field3", "searchable"]
     tps = AgentIndex.term_positions("searchable", pid)
-    assert tps |> Map.get(Store.id(my_doc), HashSet.new) |> Set.size == 2
+    assert tps |> Map.get(Storable.id(my_doc), HashSet.new) |> Set.size == 2
   end
 
   test "clear index", %{pid: pid} do
@@ -58,15 +58,15 @@ defmodule AgentIndexTest do
     AgentIndex.index(doc2, pid)
 
     assert AgentIndex.document_ids(pid)
-      |> Enum.member?(Store.id(doc1))
+      |> Enum.member?(Storable.id(doc1))
     assert AgentIndex.term_positions("cedrik", pid)
-      |> Map.has_key?(Store.id(doc1))
+      |> Map.has_key?(Storable.id(doc1))
 
-    AgentIndex.delete_doc(Store.id(doc1), pid)
+    AgentIndex.delete_doc(Storable.id(doc1), pid)
 
-    assert AgentIndex.document_ids(pid) |> Enum.member?(Store.id(doc2))
+    assert AgentIndex.document_ids(pid) |> Enum.member?(Storable.id(doc2))
     assert AgentIndex.document_ids(pid) |> Set.size == 1
     assert AgentIndex.term_positions("cedrik", pid)
-      |> Map.keys == [Store.id(doc2)]
+      |> Map.keys == [Storable.id(doc2)]
   end
 end

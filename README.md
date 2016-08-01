@@ -39,7 +39,7 @@ You can use `docker-compose` to get a redis instance up and running quickly.
 
 Each index in Cedrik is represented by a process with the `Index` `@behaviour`.
 To index something into an index simply call `Index.index_doc(something, :index_name, type)` where
-`something` would be an Elixir map or struct (I would recommend creating a struct, with an id field, that implements the `Store` protocol),
+`something` would be an Elixir map or struct (I would recommend creating a struct, with an id field that implements the `Storable` protocol - have a look at `lib/document.ex` and `lib/agent_store.ex` for reference),
 `type` must be one of the existing index implementations `AgentIndex` or `RedisIndex`. The last argument to `Index.index_doc` is optional and defaults to `AgentIndex`.
 
 To get a list of existing indices use `Index.list/0` or `Index.list/1` - these will return a list of tuples on the format `{pid, name, module}`

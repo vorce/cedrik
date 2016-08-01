@@ -47,14 +47,14 @@ defmodule Index do
       {p, _m} -> p
     end
 
-    case indexed?(Store.id(doc), pid, type) do
-      true -> Logger.info("Document #{Store.id(doc)} already present in #{index} (type: #{type}), ignored")
+    case indexed?(Storable.id(doc), pid, type) do
+      true -> Logger.info("Document #{Storable.id(doc)} already present in #{index} (type: #{type}), ignored")
       false -> index_doc_raw(doc, index, type)
     end
   end
 
   defp index_doc_raw(doc, index, type) do
-    Logger.info("Indexing document with id #{Store.id(doc)} into #{inspect index} (type: #{type})")
+    Logger.info("Indexing document with id #{Storable.id(doc)} into #{inspect index} (type: #{type})")
     type.index(doc, index)
   end
 

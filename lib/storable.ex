@@ -1,4 +1,4 @@
-defprotocol Store do
+defprotocol Storable do
   @doc "Store an elixir data structure in Cedrik"
   def store(thing)
 

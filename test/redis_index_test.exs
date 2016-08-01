@@ -7,9 +7,8 @@ defmodule RedisIndexTest do
   @test_index :redis_index
 
   setup_all do
-  #   Application.put_env(:index, :backend, RedisIndex) # TODO fix so we can enable async
-  #   :ok
-    {:ok, pid} = Supervisor.start_child(IndexSupervisor, Supervisor.Spec.worker(RedisIndex, [[name: @test_index]], id: @test_index))
+    {:ok, pid} = Supervisor.start_child(IndexSupervisor,
+      Supervisor.Spec.worker(RedisIndex, [[name: @test_index]], id: @test_index))
     {:ok, pid: pid}
   end
 
@@ -24,7 +23,7 @@ defmodule RedisIndexTest do
     RedisIndex.index(doc, pid)
 
     assert RedisIndex.document_ids(pid) |> Set.size() == 1
-    assert RedisIndex.document_ids(pid) |> Set.member?(Store.id(doc))
+    assert RedisIndex.document_ids(pid) |> Set.member?(Storable.id(doc))
     assert RedisIndex.terms(pid) |> Enum.to_list |> length > 0
   end
 
@@ -38,11 +37,11 @@ defmodule RedisIndexTest do
       :field6 => {"not", "searchable", "field6"}}
     :ok = RedisIndex.index(my_doc, pid)
 
-    assert Set.member?(RedisIndex.document_ids(pid), Store.id(my_doc))
+    assert Set.member?(RedisIndex.document_ids(pid), Storable.id(my_doc))
     assert RedisIndex.terms(pid) |> Enum.to_list |> Enum.sort ==
       ["field1", "field3", "searchable"]
     tps = RedisIndex.term_positions("searchable", pid)
-    assert tps |> Map.get(Store.id(my_doc), HashSet.new) |> Set.size == 2
+    assert tps |> Map.get(Storable.id(my_doc), HashSet.new) |> Set.size == 2
   end
 
   test "clear index", %{pid: pid} do
@@ -64,9 +63,9 @@ defmodule RedisIndexTest do
   #
   #   RedisIndex.index(doc1, pid)
   #
-  #   assert RedisIndex.term_positions("cedrik", pid) |> Map.has_key?(Store.id(doc1))
+  #   assert RedisIndex.term_positions("cedrik", pid) |> Map.has_key?(Storable.id(doc1))
   #
-  #   RedisIndex.delete_old_terms(["cedrik"], Store.id(doc1), pid)
+  #   RedisIndex.delete_old_terms(["cedrik"], Storable.id(doc1), pid)
   #   assert RedisIndex.term_positions("cedrik", pid) == %{}
   # end
 
@@ -80,16 +79,16 @@ defmodule RedisIndexTest do
     RedisIndex.index(doc2, pid)
 
     assert RedisIndex.document_ids(pid)
-      |> Enum.member?(Store.id(doc1))
+      |> Enum.member?(Storable.id(doc1))
     assert RedisIndex.term_positions("cedrik", pid)
-      |> Map.has_key?(Store.id(doc1))
+      |> Map.has_key?(Storable.id(doc1))
 
-    RedisIndex.delete_doc(Store.id(doc1), pid)
+    RedisIndex.delete_doc(Storable.id(doc1), pid)
 
-    assert RedisIndex.document_ids(pid) |> Enum.member?(Store.id(doc2))
+    assert RedisIndex.document_ids(pid) |> Enum.member?(Storable.id(doc2))
     assert RedisIndex.document_ids(pid) |> Set.size == 1
 
     assert RedisIndex.term_positions("cedrik", pid)
-      |> Map.keys == [Store.id(doc2)]
+      |> Map.keys == [Storable.id(doc2)]
   end
 end

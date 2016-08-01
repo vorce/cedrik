@@ -6,7 +6,7 @@ defmodule AgentIndex do
   require Logger
 
   def index(doc, pid) do
-    id = Store.id(doc)
+    id = Storable.id(doc)
 
     terms = Index.field_locations(id, doc)
     |> Enum.reduce(&Index.merge_term_locations(&1, &2))
