@@ -60,6 +60,10 @@ For now a token is simply any string separated by spaces.
 
 Use `Search.search(query_struct, [:index1, :index2])`, see `test/e2e_test.exs` and `test/query_test.exs` for examples.
 
+To get a `query_struct` that Cedrik understands, there is a simple (and incomplete) parser for strings: `Query.Parse.parse/1`.
+It will tokenize strings and then construct Term and Wildcard query structs accordingly.
+Terms and Wildcards will be wrapped in a Boolean, inside the must field.
+
 #### MatchAll
 
 This query will return all document ids in the specified indices.

@@ -20,6 +20,17 @@ defmodule E2eTest do
     assert result.hits |> TestUtils.ids |> Enum.sort == ["0"]
   end
 
+  test "index and search with string" do
+    doc1 = hd(TestUtils.test_corpus())
+    :ok = Index.index_doc(doc1, :hello_world)
+    query = Query.Parse.parse("bygge Majorna")
+
+    result = Search.search(query, [:hello_world])
+
+    assert length(result.hits) == 1
+    assert result.hits |> TestUtils.ids |> Enum.sort == ["0"]
+  end
+
   test "remove index" do
      doc1 = hd(TestUtils.test_corpus())
      :ok = Index.index_doc(doc1, :my_agent_index2)
