@@ -19,6 +19,9 @@ defmodule Query.Parse do
      %Query.Boolean{must: terms}
   end
 
+  defp single_word_query("*") do
+    %Query.MatchAll{}
+  end
   defp single_word_query("*" <> _word = query_string) do
     %Query.Wildcard{value: query_string}
   end

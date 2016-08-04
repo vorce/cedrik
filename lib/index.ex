@@ -44,7 +44,7 @@ defmodule Index do
         {:ok, pid} = Supervisor.start_child(IndexSupervisor,
           Supervisor.Spec.worker(type, [[name: index]], id: index))
         pid
-      {p, _m} -> p
+      {p, _n, _m} -> p
     end
 
     case indexed?(Storable.id(doc), pid, type) do
