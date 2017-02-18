@@ -21,22 +21,25 @@ defmodule QueryTest do
     result = Search.search(%Query.MatchAll{}, [idx.name])
 
     assert length(result.hits) == 1
-    assert result.hits |> T.ids |> Enum.member?("0")
-    assert result.hits |> T.locations |> length == 0
+    assert result.hits |> T.ids() |> Enum.member?("0")
+    assert result.hits |> T.locations() |> length() == 0
   end
 
   test "search for specific term" do
     result = Search.search(%Query.Term{fields: [:title], value: "Pojke"},
       [@test_index])
-    assert result.hits |> T.ids == ["3"]
+    assert T.ids(result.hits) == ["3"]
   end
 
   test "on_fields" do
-    locs = [%Location{field: :body, position: 1},
-            %Location{field: :title, position: 1}]
-    |> Enum.into(MapSet.new)
+    locs = Enum.into(
+      [%Location{field: :body, position: 1},
+        %Location{field: :title, position: 1}],
+      MapSet.new
+    )
 
-    r = Query.Term.on_fields(locs, [:title])
+    r = locs
+    |> Query.Term.on_fields([:title])
     |> Enum.to_list
 
     assert hd(r).field == :title
@@ -45,25 +48,25 @@ defmodule QueryTest do
   test "search for term with multiple hits" do
     result = Search.search(%Query.Term{fields: [:body], value: "att"},
       [:foo, @test_index])
-    assert result.hits |> T.ids |> Enum.sort == ["0", "1", "2"]
+    assert result.hits |> T.ids() |> Enum.sort() == ["0", "1", "2"]
   end
 
   test "term query obeys field parameter" do
     result = Search.search(%Query.Term{fields: [:body], value: "cedrik"},
       [@test_index])
-    assert result.hits |> T.ids == ["42"]
+    assert T.ids(result.hits) == ["42"]
   end
 
   test "term query on many fields" do
     r = Search.search(%Query.Term{fields: [:title, :body], value: "cedrik"},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["42", "666"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["42", "666"]
   end
 
   test "term query without fields looks at all" do
     r = Search.search(%Query.Term{fields: [], value: "cedrik"},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["42", "666"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["42", "666"]
   end
 
   test "boolean query ORs" do
@@ -71,7 +74,7 @@ defmodule QueryTest do
     q2 = %Query.Term{value: "döda"}
     r = Search.search(%Query.Boolean{optional: [q1, q2]},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["1", "2"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["1", "2"]
   end
 
   test "boolean query ANDs" do
@@ -79,7 +82,7 @@ defmodule QueryTest do
     q2 = %Query.Term{value: "att"}
     r = Search.search(%Query.Boolean{must: [q1, q2]},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["0", "1"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["0", "1"]
   end
 
   test "boolean query ORs and ANDs" do
@@ -87,7 +90,7 @@ defmodule QueryTest do
     must = [%Query.Term{value: "det"}, %Query.Term{value: "att"}]
     r = Search.search(%Query.Boolean{optional: opt, must: must},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["0", "1"] # TODO 1 should have higher ranking!
+    assert r.hits |> T.ids() |> Enum.sort() == ["0", "1"] # TODO 1 should have higher ranking!
   end
 
   test "boolean query NOTs" do
@@ -95,7 +98,7 @@ defmodule QueryTest do
     q2 = %Query.Term{value: "döda"}
     r = Search.search(%Query.Boolean{must_not: [q1, q2]},
       [@test_index])
-    assert r.hits |> T.ids |> Enum.sort == ["0", "1", "3"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["0", "1", "3"]
   end
 
   test "boolean query NOTs + ANDs" do
@@ -103,7 +106,7 @@ defmodule QueryTest do
     yep = [%Query.Term{value: "efter", fields: [:body]}]
     r = Search.search(%Query.Boolean{must: yep, must_not: nope},
       [@test_index])
-    assert r.hits |> T.ids == ["1"]
+    assert T.ids(r.hits) == ["1"]
   end
 
   test "nested stuff" do
@@ -115,21 +118,21 @@ defmodule QueryTest do
     r = Search.search(%Query.Boolean{must: have},
       [@test_index])
 
-    assert r.hits |> T.ids |> Enum.sort == ["42", "666"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["42", "666"]
   end
 
   test "ending wildcard query" do
     r = Search.search(%Query.Wildcard{fields: [:title], value: "Student*"},
       [@test_index])
-    assert r.hits |> T.ids == ["0"]
-    assert r.hits |> T.locations == [:title]
+    assert T.ids(r.hits) == ["0"]
+    assert T.locations(r.hits) == [:title]
   end
 
   test "leading wildcard query" do
     r = Search.search(%Query.Wildcard{fields: [:title], value: "*fabriken"},
       [@test_index])
-    assert r.hits |> T.ids == ["1"]
-    assert r.hits |> T.locations == [:title]
+    assert T.ids(r.hits) == ["1"]
+    assert T.locations(r.hits) == [:title]
   end
 
   test "wildcard with no hits" do
@@ -147,13 +150,13 @@ defmodule QueryTest do
 
     r = Search.search(bool_query, [@test_index])
 
-    assert r.hits |> T.ids |> Enum.sort == ["2"]
+    assert r.hits |> T.ids() |> Enum.sort() == ["2"]
   end
 
   test "ids with more hits before ids with less hits" do
     r = Search.search(%Query.Term{value: "en"}, [@test_index])
 
     assert length(r.hits) > 1
-    assert r.hits |> T.ids |> hd == "3"
+    assert r.hits |> T.ids() |> hd() == "3"
   end
 end

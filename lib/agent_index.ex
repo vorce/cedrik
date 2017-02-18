@@ -86,10 +86,11 @@ defmodule AgentIndex do
     pid
     |> get()
     |> Map.update(:document_ids, MapSet.new, fn(_ids) ->
-      doc_ids |> Enum.into(MapSet.new) end)
+      Enum.into(doc_ids, MapSet.new)
+    end)
     |> Map.update(:terms, %{}, fn(x) ->
-        Map.merge(x, mod_terms)
-      end)
+      Map.merge(x, mod_terms)
+    end)
     |> put(pid)
   end
 end
