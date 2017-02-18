@@ -44,7 +44,6 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
     {:ok, pid} = Supervisor.start_child(IndexSupervisor,
       Supervisor.Spec.worker(AgentIndex, [[name: name]], id: name))
 
-
     Enum.each(test_corpus(), fn(doc) ->
       AgentIndex.index(doc, pid)
     end)
