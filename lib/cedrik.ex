@@ -1,4 +1,8 @@
 defmodule Cedrik do
+  @moduledoc """
+  Cedrik OTP Application definition
+  """
+
   use Application
 
   def start(_type, _args) do

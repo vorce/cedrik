@@ -2,30 +2,31 @@ defmodule AgentIndex do
   @moduledoc """
   In-memory index
   """
+
   @behaviour Index
   require Logger
 
   def index(doc, pid) do
     id = Storable.id(doc)
 
-    terms = Index.field_locations(id, doc)
+    terms = id
+    |> Index.field_locations(doc)
     |> Enum.reduce(&Index.merge_term_locations(&1, &2))
 
-    idx = get(pid)
+    pid
+    |> get()
     |> Map.update(:terms, %{}, fn(ts) -> Index.merge_term_locations(ts, terms) end)
-    |> Map.update(:document_ids, HashSet.new, fn(ids) -> Set.put(ids, id) end)
-
-    put(idx, pid)
+    |> Map.update(:document_ids, MapSet.new, fn(ids) -> MapSet.put(ids, id) end)
+    |> put(pid)
   end
 
   def term_positions(term, pid) do
-    get(pid).terms
-    |> Map.get(term, %{})
+    Map.get(get(pid).terms, term, %{})
   end
 
   def terms(pid) do
     get(pid).terms
-    |> Map.keys
+    |> Map.keys()
     |> Stream.map(fn(t) -> t end)
   end
 
@@ -60,7 +61,7 @@ defmodule AgentIndex do
   """
   def clear(pid) do
     Agent.get_and_update(pid,
-      fn(i) -> {i, %CedrikIndex{i | document_ids: HashSet.new, terms: Map.new}} end)
+      fn(i) -> {i, %CedrikIndex{i | document_ids: MapSet.new, terms: Map.new}} end)
   end
 
   @doc """
@@ -69,10 +70,12 @@ defmodule AgentIndex do
   def delete_doc(did, pid) do
     Logger.debug("Deleting document #{did} from index #{inspect pid}")
 
-    doc_ids = document_ids(pid)
+    doc_ids = pid
+    |> document_ids()
     |> Stream.reject(fn(x) -> x == did end)
 
-    mod_terms = terms(pid)
+    mod_terms = pid
+    |> terms()
     |> Stream.map(fn(t) -> {t, term_positions(t, pid)} end)
     |> Stream.filter(fn({_t, pos}) -> Map.has_key?(pos, did) end)
     |> Stream.map(fn({t, pos}) ->
@@ -80,12 +83,14 @@ defmodule AgentIndex do
       end)
     |> Enum.into(%{})
 
-    get(pid)
-    |> Map.update(:document_ids, HashSet.new, fn(_ids) ->
-      doc_ids |> Enum.into(HashSet.new) end)
+    pid
+    |> get()
+    |> Map.update(:document_ids, MapSet.new, fn(_ids) ->
+      Enum.into(doc_ids, MapSet.new)
+    end)
     |> Map.update(:terms, %{}, fn(x) ->
-        Map.merge(x, mod_terms)
-      end)
+      Map.merge(x, mod_terms)
+    end)
     |> put(pid)
   end
 end
