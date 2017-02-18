@@ -44,8 +44,7 @@ defmodule RedisIndex do
   end
 
   defp redis() do
-    Exredis.start_link()
-    |> elem(1)
+    elem(Exredis.start_link(), 1)
   end
 
   def handle_call({:index, data}, _from, state) do
@@ -77,8 +76,7 @@ defmodule RedisIndex do
   end
 
   def indices() do
-    redis()
-    |> Exredis.query(["SMEMBERS", ".indices"])
+    Exredis.query(redis(), ["SMEMBERS", ".indices"])
   end
 
   def _document_ids(index) do
@@ -153,20 +151,19 @@ defmodule RedisIndex do
     queries = term_map
     |> Map.keys
     |> Stream.map(fn(t) ->
-        {t, merge_term_positions(Map.get(term_map, t),
-          _term_positions(t, index))}
-      end)
+      {t, merge_term_positions(Map.get(term_map, t),
+        _term_positions(t, index))}
+    end)
     |> Stream.flat_map(fn({t, locs}) ->
-        tl = for {id, loc} <- locs, do:
-          ["SADD", "#{index}_#{t}", Poison.encode!(Map.put(%{}, id, loc))]
-        tl
-        |> Enum.concat([["SADD", "#{index}.terms", t]])
-      end)
+      tl = for {id, loc} <- locs, do:
+        ["SADD", "#{index}_#{t}", Poison.encode!(Map.put(%{}, id, loc))]
+      Enum.concat(tl, [["SADD", "#{index}.terms", t]])
+    end)
     |> Stream.concat([["SADD", "#{index}.document_ids", docid]])
     |> Stream.concat([["SADD", ".indices", index]])
+    |> Enum.to_list()
 
-    redis()
-    |> Exredis.query_pipe(queries |> Enum.to_list)
+    Exredis.query_pipe(redis(), queries)
   end
 
   # TODO: Will need this for deleting all terms of
@@ -175,7 +172,7 @@ defmodule RedisIndex do
   def delete_old_terms(terms, docid, index) do
     client = redis()
     queries = terms
-    |> Stream.map(fn(t) -> {t, client |> Exredis.query(["SMEMBERS", "#{index}_#{t}"])} end)
+    |> Stream.map(fn(t) -> {t, Exredis.query(client, ["SMEMBERS", "#{index}_#{t}"])} end)
     |> Stream.reject(fn({_t, locs}) -> locs == [] end)
     |> Stream.map(fn({t, locs}) -> {t, Poison.decode!(locs)} end)
     |> Stream.filter(fn({_t, m}) -> hd(Map.keys(m)) == docid end)

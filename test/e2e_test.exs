@@ -37,10 +37,10 @@ defmodule E2eTest do
      :ok = Index.index_doc(doc1, :my_agent_index2)
      details = IndexSupervisor.by_name(:my_agent_index2)
 
-     assert IndexSupervisor.list |> Enum.member?(details) == true
+     assert Enum.member?(IndexSupervisor.list(), details) == true
 
      :ok = IndexSupervisor.remove(details)
 
-     assert IndexSupervisor.list |> Enum.member?(details) == false
+     assert Enum.member?(IndexSupervisor.list(), details) == false
   end
 end
