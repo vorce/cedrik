@@ -12,7 +12,7 @@ defmodule AgentIndexTest do
     :ok = AgentIndex.index(doc, pid)
     index = AgentIndex.get(pid)
 
-    assert index.document_ids |> MapSet.size() == 1
+    assert MapSet.size(index.document_ids) == 1
     assert MapSet.member?(index.document_ids, Storable.id(doc))
     assert Map.size(index.terms) > 0
   end
@@ -70,7 +70,7 @@ defmodule AgentIndexTest do
     assert pid |> AgentIndex.document_ids() |> Enum.member?(Storable.id(doc2))
     assert pid |> AgentIndex.document_ids() |> MapSet.size() == 1
     assert "cedrik"
-    |>AgentIndex.term_positions(pid)
+    |> AgentIndex.term_positions(pid)
     |> Map.keys == [Storable.id(doc2)]
   end
 end
