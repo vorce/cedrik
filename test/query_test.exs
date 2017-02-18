@@ -14,7 +14,7 @@ defmodule QueryTest do
       Supervisor.Spec.worker(AgentIndex, [[name: :all_q]]))
 
     idx = %CedrikIndex{name: :all_q,
-      document_ids: Set.put(HashSet.new, "0"),
+      document_ids: MapSet.put(MapSet.new, "0"),
       terms: %{"foo" => %{0 => [%Location{field: :body, position: 0}]}}}
 
     AgentIndex.put(idx, pid)
@@ -34,7 +34,7 @@ defmodule QueryTest do
   test "on_fields" do
     locs = [%Location{field: :body, position: 1},
             %Location{field: :title, position: 1}]
-    |> Enum.into(HashSet.new)
+    |> Enum.into(MapSet.new)
 
     r = Query.Term.on_fields(locs, [:title])
     |> Enum.to_list

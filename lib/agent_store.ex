@@ -9,9 +9,9 @@ defmodule AgentStore do
     end
 
     def id(doc) do
-      Map.get(doc, :id,
-        Map.get(doc, "id", :random.uniform * 1000000)) # TODO: Use some actual UUID here instead of random
-      |> to_string
+      id = Map.get(doc, :id,
+        Map.get(doc, "id", :rand.uniform * 1_000_000)) # TODO: Use some actual UUID here instead of random
+      to_string(id)
     end
 
     def delete(doc) do
@@ -39,7 +39,6 @@ defmodule AgentStore do
   def put(key, doc) do
     Agent.update(__MODULE__, &Map.put(&1, key, doc))
   end
-
 
   @doc """
   Deletes the documents with id in keys

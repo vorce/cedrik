@@ -58,7 +58,7 @@ Larmet kom runt halv niotiden på måndagsmorgonen. En pojke i förskoleåldern 
 
   def locations(hits) do
    hits
-   |> Enum.flat_map(fn{_, locs} -> Set.to_list(locs) end)
+   |> Enum.flat_map(fn{_, locs} -> MapSet.to_list(locs) end)
    |> Enum.map(fn(l) -> l.field end)
    |> Enum.uniq
   end

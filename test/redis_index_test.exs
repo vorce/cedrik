@@ -22,8 +22,8 @@ defmodule RedisIndexTest do
 
     RedisIndex.index(doc, pid)
 
-    assert RedisIndex.document_ids(pid) |> Set.size() == 1
-    assert RedisIndex.document_ids(pid) |> Set.member?(Storable.id(doc))
+    assert RedisIndex.document_ids(pid) |> MapSet.size() == 1
+    assert RedisIndex.document_ids(pid) |> MapSet.member?(Storable.id(doc))
     assert RedisIndex.terms(pid) |> Enum.to_list |> length > 0
   end
 
@@ -37,23 +37,23 @@ defmodule RedisIndexTest do
       :field6 => {"not", "searchable", "field6"}}
     :ok = RedisIndex.index(my_doc, pid)
 
-    assert Set.member?(RedisIndex.document_ids(pid), Storable.id(my_doc))
+    assert MapSet.member?(RedisIndex.document_ids(pid), Storable.id(my_doc))
     assert RedisIndex.terms(pid) |> Enum.to_list |> Enum.sort ==
       ["field1", "field3", "searchable"]
     tps = RedisIndex.term_positions("searchable", pid)
-    assert tps |> Map.get(Storable.id(my_doc), HashSet.new) |> Set.size == 2
+    assert tps |> Map.get(Storable.id(my_doc), MapSet.new) |> MapSet.size == 2
   end
 
   test "clear index", %{pid: pid} do
     doc = %{:id => 0, :body => "foo"}
 
     RedisIndex.index(doc, pid)
-    assert RedisIndex.document_ids(pid) |> Set.size == 1
+    assert RedisIndex.document_ids(pid) |> MapSet.size == 1
     assert RedisIndex.terms(pid) |> Enum.to_list == ["foo"]
 
     RedisIndex.clear(pid)
 
-    assert RedisIndex.document_ids(pid) |> Set.size == 0
+    assert RedisIndex.document_ids(pid) |> MapSet.size == 0
     assert RedisIndex.terms(pid) |> Enum.to_list == []
   end
 
@@ -86,7 +86,7 @@ defmodule RedisIndexTest do
     RedisIndex.delete_doc(Storable.id(doc1), pid)
 
     assert RedisIndex.document_ids(pid) |> Enum.member?(Storable.id(doc2))
-    assert RedisIndex.document_ids(pid) |> Set.size == 1
+    assert RedisIndex.document_ids(pid) |> MapSet.size == 1
 
     assert RedisIndex.term_positions("cedrik", pid)
       |> Map.keys == [Storable.id(doc2)]

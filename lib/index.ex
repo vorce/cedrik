@@ -1,4 +1,8 @@
 defmodule Index do
+  @moduledoc """
+  Indexing functionality
+  """
+
   require Logger
 
   @doc "Index `thing` into the destination `index`"
@@ -26,14 +30,15 @@ defmodule Index do
   @callback get(index :: Atom.t) :: Map.t
 
   def tokenize(text) do
-    re = ~r/\W/iu # Match all non-words
-    Regex.split(re, text)
-      |> Enum.reject(fn(w) -> w == "" end)
+    ~r/\W/iu # Match all non-words
+    |> Regex.split(text)
+    |> Enum.reject(fn(w) -> w == "" end)
   end
 
   def indexed?(id, index, type) do
-    type.document_ids(index)
-      |> Enum.member?(id)
+    index
+    |> type.document_ids()
+    |> Enum.member?(id)
   end
 
   @doc "Index a document (elixir map or structure) into index (pid or atom), type being either AgentIndex or RedisIndex."
@@ -47,9 +52,10 @@ defmodule Index do
       {p, _n, _m} -> p
     end
 
-    case indexed?(Storable.id(doc), pid, type) do
-      true -> Logger.info("Document #{Storable.id(doc)} already present in #{index} (type: #{type}), ignored")
-      false -> index_doc_raw(doc, index, type)
+    if indexed?(Storable.id(doc), pid, type) do
+      Logger.info("Document #{Storable.id(doc)} already present in #{index} (type: #{type}), ignored")
+    else
+      index_doc_raw(doc, index, type)
     end
   end
 
@@ -60,12 +66,12 @@ defmodule Index do
 
   def term_locations(id, terms, field) do
     terms
-      |> Enum.with_index
-      |> Enum.map(fn({t, i}) ->
-        Map.put(Map.new, t,
-          Map.put(Map.new, id,
-            Set.put(HashSet.new, %Location{field: field, position: i})))
-        end)
+    |> Enum.with_index()
+    |> Enum.map(fn({t, i}) ->
+      Map.put(Map.new, t,
+        Map.put(Map.new, id,
+          MapSet.put(MapSet.new, %Location{field: field, position: i})))
+      end)
   end
 
   # merges maps on format: %{"w" => %{n => [...], n2 => ...}, "w2" => ...}
@@ -73,7 +79,9 @@ defmodule Index do
     Map.merge(t1, t2,
       fn(_k, d1, d2) -> Map.merge(d1, d2,
         fn(_k2, l1, l2) ->
-          Enum.concat(l1, l2) |> Enum.into(HashSet.new) end)
+          l1
+          |> Enum.concat(l2)
+          |> Enum.into(MapSet.new) end)
       end)
   end
 
@@ -82,21 +90,16 @@ defmodule Index do
     |> Map.to_list()
     |> Enum.filter(&should_index?(&1))
     |> Enum.flat_map(fn({k, v}) ->
-      term_locations(id, tokenize(v), k) end)
+      term_locations(id, tokenize(v), k)
+    end)
   end
 
   def should_index?({key, val}) when is_atom(key) and is_binary(val) do
     k = Atom.to_string(key)
-    case String.starts_with?(k, "_") or key == :id do
-      true -> false
-      false -> true
-    end
+    !(String.starts_with?(k, "_") or key == :id)
   end
   def should_index?({key, val}) when is_binary(key) and is_binary(val) do
-    case String.starts_with?(key, "_") or key == "id" do
-      true -> false
-      false -> true
-    end
+    !(String.starts_with?(key, "_") or key == "id")
   end
   def should_index?({_key, _val}) do false end
 end

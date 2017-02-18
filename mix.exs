@@ -4,10 +4,10 @@ defmodule Cedrik.Mixfile do
   def project do
     [app: :cedrik,
      version: "0.0.1",
-     elixir: "~> 1.2",
+     elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps]
+     deps: deps()]
   end
 
   # Configuration for the OTP application
@@ -29,8 +29,10 @@ defmodule Cedrik.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:chronos, "~> 1.7"},
-     {:exredis, "~> 0.2.5"},
+     {:exredis, "~> 0.2"},
      {:poison, "~> 2.2"},
+
+     {:credo, "~> 0.6", only: [:dev, :test]},
      {:inch_ex, "~> 0.5", only: [:dev, :test]}
    ]
   end

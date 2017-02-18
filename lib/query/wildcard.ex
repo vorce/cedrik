@@ -1,4 +1,8 @@
 defmodule Query.Wildcard do
+  @moduledoc """
+  Wildcard query
+  """
+
   defstruct fields: [], value: nil
   @type t :: %Query.Wildcard{fields: List.t, value: any}
 
@@ -15,14 +19,12 @@ defmodule Query.Wildcard do
     end
 
     def leading_wildcard(query, indices) do
-      hits = indices
-        |> Enum.flat_map(&ending_terms(&1, query))
+      hits = Enum.flat_map(indices, &ending_terms(&1, query))
       %Result{hits: hits}
     end
 
     def ending_wildcard(query, indices) do
-      hits = indices
-        |> Enum.flat_map(&leading_terms(&1, query))
+      hits = Enum.flat_map(indices, &leading_terms(&1, query))
       %Result{hits: hits}
     end
 
@@ -36,11 +38,13 @@ defmodule Query.Wildcard do
 
     def filtered_terms(index, query, filter_fn) do
       no_wc = String.replace(query.value, "*", "")
-      AgentIndex.terms(index)
-        |> Stream.filter(&filter_fn.(&1, no_wc))
-        |> Stream.map(&AgentIndex.term_positions(&1, index))
-        |> Enum.reduce(%{}, &Index.merge_term_locations(&1, &2))
-        |> Query.Term.remove_irrelevant(query.fields)
+
+      index
+      |> AgentIndex.terms()
+      |> Stream.filter(&filter_fn.(&1, no_wc))
+      |> Stream.map(&AgentIndex.term_positions(&1, index))
+      |> Enum.reduce(%{}, &Index.merge_term_locations(&1, &2))
+      |> Query.Term.remove_irrelevant(query.fields)
     end
   end
 end

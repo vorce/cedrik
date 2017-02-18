@@ -93,7 +93,7 @@ leading (`*foo`) or trailing (`foo*`)
 
 At the moment results from `Search.search/2` will give you
 a list of tuples that look like:
-`{doc_id, #HashSet<[%Location{field: :field, position: x}]>}`
+`{doc_id, #MapSet<[%Location{field: :field, position: x}]>}`
 sorted by the stuff with most hits first.
 
 #### Fields

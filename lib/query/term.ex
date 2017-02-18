@@ -8,16 +8,18 @@ defmodule Query.Term do
     def search(query, indices) do
       Logger.debug("Searching for term '#{query.value}' in fields '#{fields(query.fields)}', in indices '#{Enum.join(indices, ", ")}'")
 
-      hits = IndexSupervisor.list(indices)
-        |> Stream.flat_map(&term_in(&1, query))
-        |> Enum.to_list
-        |> Enum.sort(&Query.Term.hit_frequency/2)
-      %Result{ hits: hits }
+      hits = indices
+      |> IndexSupervisor.list()
+      |> Stream.flat_map(&term_in(&1, query))
+      |> Enum.to_list
+      |> Enum.sort(&Query.Term.hit_frequency/2)
+      %Result{hits: hits}
     end
 
     def term_in({pid, _name, module}, query) do
-      module.term_positions(query.value, pid)
-        |> Query.Term.remove_irrelevant(query.fields)
+      query.value
+      |> module.term_positions(pid)
+      |> Query.Term.remove_irrelevant(query.fields)
     end
 
     def fields([]) do "*" end
@@ -30,7 +32,7 @@ defmodule Query.Term do
     hits
       |> Stream.map(fn({id, locs}) ->
         ls = Query.Term.on_fields(locs, fields)
-        {id, Enum.into(ls, HashSet.new)}
+        {id, Enum.into(ls, MapSet.new)}
       end)
       |> Stream.filter(fn({_id, locs}) ->
         not Enum.empty?(locs) end)
@@ -44,6 +46,6 @@ defmodule Query.Term do
   end
 
   def hit_frequency({_i1, ls1}, {_i2, ls2}) do
-    Set.size(ls1) > Set.size(ls2)
+    MapSet.size(ls1) > MapSet.size(ls2)
   end
 end

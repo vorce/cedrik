@@ -1,4 +1,8 @@
 defmodule Query.MatchAll do
+  @moduledoc """
+  Match all query
+  """
+
   require Logger
 
   defstruct []
@@ -8,13 +12,14 @@ defmodule Query.MatchAll do
     def search(_query, indices) do
       Logger.debug("Searching for all documents in #{inspect indices}")
       hits = all_in(indices)
-      %Result{ hits: Enum.to_list(hits) }
+      %Result{hits: Enum.to_list(hits)}
     end
 
     def all_in(indices) do
-      IndexSupervisor.list(indices)
-        |> Enum.flat_map(fn({p, _n, m}) -> m.document_ids(p) end)
-        |> Enum.map(fn(id) -> {id, HashSet.new} end)
+      indices
+      |> IndexSupervisor.list()
+      |> Enum.flat_map(fn({p, _n, m}) -> m.document_ids(p) end)
+      |> Enum.map(fn(id) -> {id, MapSet.new} end)
     end
   end
 end

@@ -12,8 +12,8 @@ defmodule AgentIndexTest do
     :ok = AgentIndex.index(doc, pid)
     index = AgentIndex.get(pid)
 
-    assert index.document_ids |> Set.size() == 1
-    assert Set.member?(index.document_ids, Storable.id(doc))
+    assert index.document_ids |> MapSet.size() == 1
+    assert MapSet.member?(index.document_ids, Storable.id(doc))
     assert Map.size(index.terms) > 0
   end
 
@@ -28,23 +28,23 @@ defmodule AgentIndexTest do
 
     :ok = AgentIndex.index(my_doc, pid)
 
-    assert Set.member?(AgentIndex.document_ids(pid), Storable.id(my_doc))
+    assert MapSet.member?(AgentIndex.document_ids(pid), Storable.id(my_doc))
     assert AgentIndex.terms(pid) |> Enum.to_list |> Enum.sort ==
       ["field1", "field3", "searchable"]
     tps = AgentIndex.term_positions("searchable", pid)
-    assert tps |> Map.get(Storable.id(my_doc), HashSet.new) |> Set.size == 2
+    assert tps |> Map.get(Storable.id(my_doc), MapSet.new) |> MapSet.size == 2
   end
 
   test "clear index", %{pid: pid} do
     doc = %{:id => 0, :body => "foo"}
 
     AgentIndex.index(doc, pid)
-    assert AgentIndex.document_ids(pid) |> Set.size == 1
+    assert AgentIndex.document_ids(pid) |> MapSet.size == 1
     assert AgentIndex.terms(pid) |> Enum.to_list == ["foo"]
 
     AgentIndex.clear(pid)
 
-    assert AgentIndex.document_ids(pid) |> Set.size == 0
+    assert AgentIndex.document_ids(pid) |> MapSet.size == 0
     assert AgentIndex.terms(pid) |> Enum.to_list == []
   end
 
@@ -65,7 +65,7 @@ defmodule AgentIndexTest do
     AgentIndex.delete_doc(Storable.id(doc1), pid)
 
     assert AgentIndex.document_ids(pid) |> Enum.member?(Storable.id(doc2))
-    assert AgentIndex.document_ids(pid) |> Set.size == 1
+    assert AgentIndex.document_ids(pid) |> MapSet.size == 1
     assert AgentIndex.term_positions("cedrik", pid)
       |> Map.keys == [Storable.id(doc2)]
   end
