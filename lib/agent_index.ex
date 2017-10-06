@@ -93,6 +93,9 @@ defmodule AgentIndex do
     |> put(pid)
   end
 
+  @doc """
+  Saves the index referenced by `pid` to the `file_path` on disk
+  """
   def save_to_file(file_path, pid) do
     content = pid
     |> get()
@@ -101,6 +104,9 @@ defmodule AgentIndex do
     File.write(file_path, content)
   end
 
+  @doc """
+  Loads the index on disk at `file_path` into the index referenced by `pid`
+  """
   def load_from_file(file_path, pid) do
     with {:ok, content} <- File.read(file_path) do
       content
