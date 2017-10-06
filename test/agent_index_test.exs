@@ -2,9 +2,31 @@ defmodule AgentIndexTest do
   use ExUnit.Case, async: true
   alias TestUtils
 
+  @test_index_file "test_index.cedrik"
+
   setup do
     {:ok, idx} = AgentIndex.start_link([name: :test])
+
+    on_exit(fn ->
+      File.rm(@test_index_file)
+    end)
+
     {:ok, pid: idx}
+  end
+
+  test "store and load to/from file", %{pid: pid} do
+    doc = hd(TestUtils.test_corpus)
+    :ok = AgentIndex.index(doc, pid)
+
+    refute File.exists?(@test_index_file)
+    assert AgentIndex.save_to_file(@test_index_file, pid) == :ok
+    assert File.exists?(@test_index_file)
+
+    {:ok, load} = AgentIndex.start_link([name: :test_load_from_file])
+    refute MapSet.member?(AgentIndex.document_ids(load), Storable.id(doc))
+
+    assert AgentIndex.load_from_file(@test_index_file, load) == :ok
+    assert MapSet.member?(AgentIndex.document_ids(load), Storable.id(doc))
   end
 
   test "indexing one doc", %{pid: pid} do
