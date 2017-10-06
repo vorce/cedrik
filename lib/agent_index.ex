@@ -42,15 +42,14 @@ defmodule AgentIndex do
   end
 
   @doc """
-  Gets a value by `key`. If it doesn't exist
-  creates a new index.
+  Gets an index.
   """
   def get(pid) do
     Agent.get(pid, &(&1))
   end
 
   @doc """
-  Puts the `value` for the given `key`
+  Sets the index
   """
   def put(index, pid) do
     Agent.update(pid, fn(_) -> index end)
@@ -92,5 +91,21 @@ defmodule AgentIndex do
       Map.merge(x, mod_terms)
     end)
     |> put(pid)
+  end
+
+  def save_to_file(file_path, pid) do
+    content = pid
+    |> get()
+    |> :erlang.term_to_binary()
+
+    File.write(file_path, content)
+  end
+
+  def load_from_file(file_path, pid) do
+    with {:ok, content} <- File.read(file_path) do
+      content
+      |> :erlang.binary_to_term()
+      |> put(pid)
+    end
   end
 end
