@@ -6,9 +6,12 @@ defmodule E2eTest do
   test "index and search" do
     doc1 = hd(TestUtils.test_corpus())
     doc2 = Enum.at(TestUtils.test_corpus(), 1)
-    :ok = Index.index_doc(doc1, :my_agent_index) # Create index + index doc
-    :ok = Index.index_doc(doc1, :my_agent_index) # Find index + index doc
+    # Create index + index doc
+    :ok = Index.index_doc(doc1, :my_agent_index)
+    # Find index + index doc
+    :ok = Index.index_doc(doc1, :my_agent_index)
     :ok = Index.index_doc(doc2, :my_redis_index)
+
     query = %Query.Boolean{
       must: [%Query.Term{value: "och"}],
       optional: [%Query.Wildcard{value: "Torslanda*"}],
@@ -18,7 +21,7 @@ defmodule E2eTest do
     result = Search.search(query, [:my_agent_index, :my_redis_index])
 
     assert length(result.hits) == 1
-    assert result.hits |> TestUtils.ids |> Enum.sort == ["0"]
+    assert result.hits |> TestUtils.ids() |> Enum.sort() == ["0"]
   end
 
   test "index and search with string" do
@@ -29,18 +32,18 @@ defmodule E2eTest do
     result = Search.search(query, [:hello_world])
 
     assert length(result.hits) == 1
-    assert result.hits |> TestUtils.ids |> Enum.sort == ["0"]
+    assert result.hits |> TestUtils.ids() |> Enum.sort() == ["0"]
   end
 
   test "remove index" do
-     doc1 = hd(TestUtils.test_corpus())
-     :ok = Index.index_doc(doc1, :my_agent_index2)
-     details = IndexSupervisor.by_name(:my_agent_index2)
+    doc1 = hd(TestUtils.test_corpus())
+    :ok = Index.index_doc(doc1, :my_agent_index2)
+    details = IndexSupervisor.by_name(:my_agent_index2)
 
-     assert Enum.member?(IndexSupervisor.list(), details) == true
+    assert Enum.member?(IndexSupervisor.list(), details) == true
 
-     :ok = IndexSupervisor.remove(details)
+    :ok = IndexSupervisor.remove(details)
 
-     assert Enum.member?(IndexSupervisor.list(), details) == false
+    assert Enum.member?(IndexSupervisor.list(), details) == false
   end
 end

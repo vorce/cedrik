@@ -4,17 +4,21 @@ defmodule Query.Wildcard do
   """
 
   defstruct fields: [], value: nil
-  @type t :: %Query.Wildcard{fields: List.t, value: any}
+  @type t :: %Query.Wildcard{fields: List.t(), value: any}
 
   defimpl Search, for: Query.Wildcard do
     def search(query, indices) do
       parts = String.split(query.value, "*")
+
       cond do
-        length(parts) == 2 && parts |> Enum.reverse |> hd == "" ->
+        length(parts) == 2 && parts |> Enum.reverse() |> hd == "" ->
           ending_wildcard(query, indices)
+
         length(parts) == 2 && hd(parts) == "" ->
           leading_wildcard(query, indices)
-        true -> raise("No wildcard character ('*') passed to wildcard query")
+
+        true ->
+          raise("No wildcard character ('*') passed to wildcard query")
       end
     end
 
