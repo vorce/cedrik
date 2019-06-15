@@ -123,8 +123,7 @@ defmodule RedisIndex do
       |> Map.put(:field, String.to_atom(Map.get(locs, "field")))
       |> Map.put(:position, Map.get(locs, "position"))
     end)
-    |> Enum.map(&struct(Location, &1))
-    |> Enum.into(MapSet.new())
+    |> Enum.into(MapSet.new(), &struct(Location, &1))
   end
 
   def merge_term_positions(tp1, tp2) do

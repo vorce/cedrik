@@ -20,7 +20,7 @@ config :cedrik, IndexSupervisor, indices: %{:testindex0 => AgentIndex, :testinde
 # Only needs to be specified when using the RedisIndex backend
 # and when running the external tests.
 config :exredis,
-  host: "docker.local",
+  host: "localhost",
   port: 6379
 
 # It is also possible to import configuration files, relative to this
