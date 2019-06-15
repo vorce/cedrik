@@ -9,8 +9,14 @@ defmodule AgentStore do
     end
 
     def id(doc) do
-      id = Map.get(doc, :id,
-        Map.get(doc, "id", :rand.uniform * 1_000_000)) # TODO: Use some actual UUID here instead of random
+      id =
+        Map.get(
+          doc,
+          :id,
+          # TODO: Use some actual UUID here instead of random
+          Map.get(doc, "id", :rand.uniform() * 1_000_000)
+        )
+
       to_string(id)
     end
 
@@ -23,7 +29,7 @@ defmodule AgentStore do
   Starts a new AgentStore.
   """
   def start_link do
-    Agent.start_link(fn -> Map.new end, name: __MODULE__)
+    Agent.start_link(fn -> Map.new() end, name: __MODULE__)
   end
 
   @doc """
